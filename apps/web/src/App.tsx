@@ -2,6 +2,7 @@ import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router';
 import { useAuth } from './auth/auth';
 import { OrgIndexRedirect, OrgLayout } from './components/Layout';
 import { AdminPage } from './pages/Admin';
+import { AlertsPage } from './pages/Alerts';
 import { CameraDetailPage } from './pages/CameraDetail';
 import { CamerasPage } from './pages/Cameras';
 import { DashboardPage } from './pages/Dashboard';
@@ -18,8 +19,6 @@ function RequireAuth() {
   return <Outlet />;
 }
 
-const Soon = ({ what }: { what: string }) => <p className="muted">{what}: coming in the next task.</p>;
-
 export function App() {
   return (
     <Routes>
@@ -29,7 +28,7 @@ export function App() {
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/o/:orgId" element={<OrgLayout />}>
           <Route index element={<DashboardPage />} />
-          <Route path="alerts" element={<Soon what="Alerts" />} />
+          <Route path="alerts" element={<AlertsPage />} />
           <Route path="cameras" element={<CamerasPage />} />
           <Route path="cameras/:cameraId" element={<CameraDetailPage />} />
           <Route path="rules" element={<RulesPage />} />
