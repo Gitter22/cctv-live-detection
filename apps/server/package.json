@@ -8,9 +8,13 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.test.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prebuild": "npm run build --prefix ../../packages/shared",
+    "pretypecheck": "npm run build --prefix ../../packages/shared",
+    "pretest": "npm run build --prefix ../../packages/shared"
   },
   "dependencies": {
+    "@cctv/shared": "^0.1.0",
     "cookie-parser": "^1.4.7",
     "express": "^5.3.0",
     "jsonwebtoken": "^9.0.3",

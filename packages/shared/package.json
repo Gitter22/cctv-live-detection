@@ -2,11 +2,31 @@
   "name": "@cctv/shared",
   "version": "0.1.0",
   "private": true,
-  "description": "Event schema, types and topic names shared by vision, server, web and mobile",
-  "main": "src/index.js",
-  "files": ["src", "schemas"],
+  "description": "Schemas (zod), types and topic names shared by server, edge, web and mobile",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "schemas"
+  ],
   "exports": {
-    ".": "./src/index.js",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
     "./schemas/*": "./schemas/*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
   }
 }

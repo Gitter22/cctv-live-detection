@@ -7,7 +7,7 @@ Read `cctv-alerts-handover.md` for the original goal and hardware, and **`docs/A
 - **go2rtc is the only component that connects to the NVR.** Vision reads `rtsp://go2rtc:8554/<stream>`.
 - **Don't change the NVR's stream settings.** Handle everything in software.
 - **Secrets live only in the root `.env`** (gitignored, password URL-encoded). Never put them in code, config files or chat. `config/go2rtc.yaml` uses `${NVR_PASSWORD}` substitution.
-- The event contract is `packages/shared/schemas/vision-event.v1.json`. Bump the version for breaking changes.
+- The event contract is `packages/shared/schemas/vision-event.v1.json` (Python) mirrored by the zod schema in `packages/shared/src/vision-event.ts`; a test keeps them in sync. Bump the version for breaking changes.
 - **No Ultralytics/YOLO (AGPL).** Use Apache/MIT models behind `vision/detectors/` (registry in `__init__.py`).
 - Server: CommonJS. `packages/shared` must work from both CJS and bundlers.
 - User: strong in React/Node, learning Python and React Native, beginner at networking. Explain network and device steps one at a time.
