@@ -137,3 +137,27 @@ fieldset legend { padding: 0 0.25rem; }
 .codeblock { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 0.8rem; overflow-x: auto; font-size: 0.85rem; white-space: pre-wrap; word-break: break-all; }
 section.card { display: grid; gap: 0.6rem; }
 section.card table { margin-top: 0.25rem; }
+
+/* ---------------------------------------------------------------- zone editor */
+.toolbar { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.editor-body { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 1rem; align-items: start; }
+.canvas { position: relative; aspect-ratio: 16 / 9; background: #111; border-radius: 8px; overflow: hidden; user-select: none; touch-action: none; }
+.canvas.drawing { cursor: crosshair; }
+.canvas img, .canvas .no-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; display: grid; place-items: center; }
+.canvas svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.canvas .zone { fill: rgb(47 129 247 / 22%); stroke: #2f81f7; stroke-width: 3; vector-effect: non-scaling-stroke; cursor: pointer; }
+.canvas .zone.sel { fill: rgb(255 200 0 / 25%); stroke: #ffc800; }
+.canvas .line { stroke: #f85149; stroke-width: 4; vector-effect: non-scaling-stroke; cursor: pointer; }
+.canvas .line.sel { stroke: #ffc800; }
+.canvas .draft { fill: none; stroke: #ffc800; stroke-width: 2; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; }
+.handle { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #ffc800; border: 2px solid #000; cursor: grab; }
+.draft-handle { cursor: default; width: 10px; height: 10px; margin: -5px 0 0 -5px; }
+.shape-label { position: absolute; transform: translate(4px, -120%); background: rgb(0 0 0 / 65%); color: #fff; font-size: 0.75rem; padding: 0.1rem 0.35rem; border-radius: 4px; pointer-events: none; white-space: nowrap; }
+.shape-list { display: grid; gap: 0.4rem; }
+.shape-row { display: grid; grid-template-columns: 12px 1fr auto auto; gap: 0.5rem; align-items: center; padding: 0.35rem; border-radius: 8px; border: 1px solid transparent; }
+.shape-row.sel { border-color: var(--border); background: var(--surface-2); }
+.shape-row input { padding: 0.3rem 0.5rem; }
+.swatch { width: 12px; height: 12px; border-radius: 3px; }
+.swatch.zone { background: #2f81f7; }
+.swatch.line { background: #f85149; }
+@media (max-width: 900px) { .editor-body { grid-template-columns: 1fr; } }
