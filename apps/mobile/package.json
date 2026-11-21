@@ -6,6 +6,7 @@
     "@cctv/shared": "file:../../packages/shared",
     "@tanstack/react-query": "^5.108.2",
     "expo": "~58.0.26",
+    "expo-build-properties": "~58.0.12",
     "expo-constants": "~58.0.16",
     "expo-device": "~58.0.5",
     "expo-image": "~58.0.18",
