@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import type { Event } from '@prisma/client';
+import type { Alert, Event } from '@prisma/client';
 
 /**
  * In-process event bus. Ingestion emits, the rules engine (C3) and live streams (C5) listen.
@@ -9,6 +9,7 @@ export interface BusEvents {
   'event.ingested': [Event];
   /** A site's rules were created/updated/deleted (siteId). */
   'rules.changed': [string];
+  'alert.created': [Alert];
 }
 
 class Bus extends EventEmitter<BusEvents> {}
