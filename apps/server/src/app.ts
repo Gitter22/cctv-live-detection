@@ -6,6 +6,7 @@ import { authRouter } from './routes/auth';
 import { healthRouter } from './routes/health';
 import { orgsRouter } from './routes/orgs';
 import { sitesRouter } from './routes/sites';
+import { sourcesRouter } from './routes/sources';
 
 export function createApp() {
   const app = express();
@@ -19,6 +20,7 @@ export function createApp() {
   app.use('/api', authRouter);
   app.use('/api', orgsRouter);
   app.use('/api', sitesRouter);
+  app.use('/api', sourcesRouter);
 
   app.use('/api', (_req, _res, next) => next(notFound('Unknown API route')));
   app.use(errorMiddleware);

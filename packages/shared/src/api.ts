@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { OrgRole, Slug } from './enums';
+import { OrgRole, Slug, SourceVendor } from './enums';
 
 /** Request bodies of the REST API. Shared so web/mobile forms validate exactly like the server. */
 
@@ -61,3 +61,50 @@ export const UpdateSiteBody = z
   .partial()
   .refine((b) => Object.keys(b).length > 0, 'nothing to update');
 export type UpdateSiteBody = z.infer<typeof UpdateSiteBody>;
+
+// ---------------------------------------------------------------- sources
+
+const Host = z
+  .string()
+  .trim()
+  .min(1)
+  .max(253)
+  .regex(/^[a-zA-Z0-9.-]+$|^\[[0-9a-fA-F:]+\]$/, 'hostname or IP address only (no scheme, path or port)');
+export const RtspUrl = z
+  .string()
+  .trim()
+  .max(2000)
+  .regex(/^rtsps?:\/\/[^\s]+$/i, 'must start with rtsp:// or rtsps://');
+const Port = z.coerce.number().int().min(1).max(65535);
+
+const DeviceSourceFields = {
+  name: Name,
+  vendor: SourceVendor,
+  host: Host,
+  rtspPort: Port.default(554),
+  username: z.string().max(120).optional(),
+  /** Plain password. Stored encrypted, never returned. */
+  password: z.string().max(200).optional(),
+};
+
+export const CreateSourceBody = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('NVR'), ...DeviceSourceFields }),
+  z.object({ kind: z.literal('CAMERA'), ...DeviceSourceFields }),
+  z.object({ kind: z.literal('RAW_URL'), name: Name, url: RtspUrl }),
+]);
+export type CreateSourceBody = z.infer<typeof CreateSourceBody>;
+
+/** Omit a secret to keep it, send null to clear it, send a string to replace it. */
+export const UpdateSourceBody = z
+  .object({
+    name: Name,
+    vendor: SourceVendor,
+    host: Host,
+    rtspPort: Port,
+    username: z.string().max(120).nullable(),
+    password: z.string().max(200).nullable(),
+    url: RtspUrl,
+  })
+  .partial()
+  .refine((b) => Object.keys(b).length > 0, 'nothing to update');
+export type UpdateSourceBody = z.infer<typeof UpdateSourceBody>;
