@@ -10,6 +10,7 @@ export interface BusEvents {
   /** A site's rules were created/updated/deleted (siteId). */
   'rules.changed': [string];
   'alert.created': [Alert];
+  'alert.updated': [Alert];
 }
 
 class Bus extends EventEmitter<BusEvents> {}

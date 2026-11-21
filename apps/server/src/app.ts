@@ -2,6 +2,7 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 import { authenticate, csrfGuard } from './auth/session';
 import { errorMiddleware, notFound } from './lib/http';
+import { alertsRouter } from './routes/alerts';
 import { authRouter } from './routes/auth';
 import { camerasRouter } from './routes/cameras';
 import { edgeApiRouter, edgesRouter } from './routes/edges';
@@ -33,6 +34,7 @@ export function createApp() {
   app.use('/api', camerasRouter);
   app.use('/api', edgesRouter);
   app.use('/api', rulesRouter);
+  app.use('/api', alertsRouter);
 
   app.use('/api', (_req, _res, next) => next(notFound('Unknown API route')));
   app.use(errorMiddleware);
