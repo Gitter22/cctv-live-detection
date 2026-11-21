@@ -6,6 +6,7 @@ import { CameraDetailPage } from './pages/CameraDetail';
 import { CamerasPage } from './pages/Cameras';
 import { DashboardPage } from './pages/Dashboard';
 import { LoginPage } from './pages/Login';
+import { RulesPage } from './pages/Rules';
 import { SettingsPage } from './pages/Settings';
 
 /** Only signed-in users get past this; others go to /login and come back afterwards. */
@@ -31,7 +32,7 @@ export function App() {
           <Route path="alerts" element={<Soon what="Alerts" />} />
           <Route path="cameras" element={<CamerasPage />} />
           <Route path="cameras/:cameraId" element={<CameraDetailPage />} />
-          <Route path="rules" element={<Soon what="Rules" />} />
+          <Route path="rules" element={<RulesPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -161,3 +161,9 @@ section.card table { margin-top: 0.25rem; }
 .swatch.zone { background: #2f81f7; }
 .swatch.line { background: #f85149; }
 @media (max-width: 900px) { .editor-body { grid-template-columns: 1fr; } }
+.rule-form .checks { align-items: center; }
+.window-row { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; width: 100%; }
+.day { font-size: 0.8rem; }
+.summary { grid-column: 1 / -1; margin: 0; }
+.modal { width: min(680px, 100%); }
+tr.muted td { color: var(--muted); }
