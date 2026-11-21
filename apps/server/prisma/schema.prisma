@@ -72,6 +72,7 @@ model Organization {
   memberships   Membership[]
   sites         Site[]
   supportGrants SupportGrant[]
+  people        Person[]
 
   @@map("organizations")
 }
@@ -256,6 +257,9 @@ model Event {
   payload        Json
   /// Key in the snapshot store, e.g. "<siteId>/2026-11-21/<id>.jpg"
   snapshotKey    String?
+  /// face.observed: best enrolled match (null = no match above the threshold)
+  facePersonId   String?  @db.Uuid
+  faceSimilarity Float?
   receivedAt     DateTime @default(now())
   site           Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   alerts         Alert[]
@@ -320,4 +324,36 @@ model AuditLog {
 
   @@index([organizationId, at])
   @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------- faces
+
+/** Someone an organization knows (family member, employee). Biometric data: org-scoped. */
+model Person {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  name           String
+  notes          String?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  faces          FaceSample[]
+
+  @@index([organizationId])
+  @@map("people")
+}
+
+/// One face embedding (SFace, 128-d, L2-normalised) of a person, copied from a face.observed event.
+/// No ANN index on purpose: orgs have at most a few hundred samples, an exact scan is <1 ms and
+/// Prisma can't express HNSW indexes (it would drop them on every migrate dev).
+model FaceSample {
+  id             String                      @id @default(uuid()) @db.Uuid
+  organizationId String                      @db.Uuid
+  personId       String                      @db.Uuid
+  embedding      Unsupported("vector(128)")
+  sourceEventId  String?                     @db.Uuid
+  createdAt      DateTime                    @default(now())
+  person         Person                      @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("face_samples")
 }

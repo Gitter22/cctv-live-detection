@@ -4,6 +4,7 @@ import { Router, json } from 'express';
 import { z } from 'zod';
 import { bus } from '../lib/bus';
 import { db } from '../lib/db';
+import { matchFace } from '../lib/faces';
 import { HttpError, badRequest } from '../lib/http';
 import { logger } from '../lib/logger';
 import { isJpeg, putObject, snapshotKey } from '../lib/store';
@@ -39,6 +40,9 @@ ingestRouter.post('/events', json({ limit: '4mb' }), async (req, res) => {
   // retry stores both (writing the same key again is harmless).
   if (key && body.snapshot) await putObject(key, Buffer.from(body.snapshot, 'base64'));
 
+  // Faces: identity is decided here (org-scoped), never at the edge.
+  const match = ev.type === 'face.observed' && ev.face ? await matchFace(edge.organizationId, ev.face.embedding) : null;
+
   try {
     const row = await db.event.create({
       data: {
@@ -50,6 +54,8 @@ ingestRouter.post('/events', json({ limit: '4mb' }), async (req, res) => {
         ts,
         payload: ev as unknown as Prisma.InputJsonValue,
         snapshotKey: key,
+        facePersonId: match?.personId ?? null,
+        faceSimilarity: match?.similarity ?? null,
       },
     });
     bus.emit('event.ingested', row);

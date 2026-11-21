@@ -41,7 +41,15 @@ export function alertView(orgId: string, a: Alert & { event?: Event | null; rule
     closedAt: a.closedAt,
     notes: a.notes,
     snapshotUrl: snapshotUrl(orgId, a.event ?? null),
-    event: a.event ? { id: a.event.id, type: a.event.type, ts: a.event.ts, payload: a.event.payload } : null,
+    event: a.event
+      ? {
+          id: a.event.id,
+          type: a.event.type,
+          ts: a.event.ts,
+          payload: a.event.payload,
+          face: a.event.type === 'face.observed' ? { personId: a.event.facePersonId, similarity: a.event.faceSimilarity } : null,
+        }
+      : null,
   };
 }
 
@@ -135,6 +143,7 @@ alertsRouter.get('/orgs/:orgId/events', async (req, res) => {
       type: e.type,
       ts: e.ts,
       payload: e.payload,
+      face: e.type === 'face.observed' ? { personId: e.facePersonId, similarity: e.faceSimilarity } : null,
       snapshotUrl: snapshotUrl(access.organizationId, e),
     })),
     nextBefore: events.length === q.limit ? events.at(-1)!.ts.toISOString() : null,
