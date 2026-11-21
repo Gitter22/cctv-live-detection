@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Read `cctv-alerts-handover.md` for the full goal, hardware and plan. Key rules:
+Read `cctv-alerts-handover.md` for the original goal and hardware, and **`docs/ARCHITECTURE.md` (multi-site design) and `docs/IMPLEMENTATION_PLAN.md` (tasks; tick the checkbox in the task's own commit, commit message starts with the task ID, push at each milestone)**. Key rules:
 
 - **The detection core (`services/vision`) has no business rules.** It publishes generic VisionEvents only. Rules go in `apps/server`.
 - **`services/vision` never touches the database.** Node (`apps/server`, Prisma) owns the schema and migrations.
