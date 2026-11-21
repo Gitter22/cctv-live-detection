@@ -32,6 +32,14 @@ const EnvSchema = z.object({
         return z.NEVER;
       }
     }),
+  /** TURN relay (coturn on the hub): comma-separated URLs, e.g. turn:hub.example.com:3478?transport=udp */
+  TURN_URLS: z
+    .string()
+    .default('')
+    .transform((s) => s.split(',').map((u) => u.trim()).filter(Boolean)),
+  /** Shared with coturn's static-auth-secret. Empty = no TURN. */
+  TURN_SECRET: z.string().default(''),
+  TURN_TTL_S: z.coerce.number().int().min(60).max(86_400).default(3600),
   SUPERADMIN_EMAIL: z.string().email().optional(),
   SUPERADMIN_PASSWORD: z.string().min(10).optional(),
   SUPERADMIN_NAME: z.string().default('Platform Admin'),

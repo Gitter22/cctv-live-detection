@@ -13,7 +13,7 @@ import { Router } from 'express';
 import { type OrgAccess, loadSite, requireCap } from '../access/access';
 import { edgeHub } from '../edge/control';
 import { siteCameraStatus, siteLiveUrl, thumbnailKey } from '../edge/health';
-import { env } from '../config/env';
+import { iceServersFor } from '../lib/turn';
 import { z } from 'zod';
 import { HttpError } from '../lib/http';
 import { audit } from '../lib/audit';
@@ -134,7 +134,7 @@ camerasRouter.get(`${base}/:cameraId/thumbnail`, async (req, res) => {
  * URLs for this camera. Phase F replaces this with signalling through the server.
  */
 camerasRouter.get(`${base}/:cameraId/live`, async (req, res) => {
-  const { access } = await orgCtx(req);
+  const { user, access } = await orgCtx(req);
   requireCap(access, 'footage.read');
   const cam = await loadCamera(access, param(req, 'siteId'), param(req, 'cameraId'));
   if (!cam.enabled) throw notFound('Camera is disabled');
@@ -143,7 +143,7 @@ camerasRouter.get(`${base}/:cameraId/live`, async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   res.json({
     // Preferred: WebRTC negotiated through the server (works without LAN access to the site).
-    webrtc: { available: !!edgeHub?.connected(cam.siteId), iceServers: env().ICE_SERVERS },
+    webrtc: { available: !!edgeHub?.connected(cam.siteId), iceServers: iceServersFor(user.id) },
     // Fallback: the site's own go2rtc player (same LAN / Tailscale only).
     sd: player(cam.key),
     hd: player(`${cam.key}_main`),
