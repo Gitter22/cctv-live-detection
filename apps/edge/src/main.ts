@@ -2,7 +2,9 @@ import type { EdgeConfig } from '@cctv/shared';
 import { ConfigSync } from './config-sync';
 import { join } from 'node:path';
 import { loadEnv } from './env';
+import { Forwarder, connectMqtt, type SpooledEvent } from './forwarder';
 import { applyGo2rtc } from './go2rtc';
+import { Spool } from './spool';
 import { applyVision } from './vision-config';
 import { logger } from './logger';
 
@@ -30,10 +32,19 @@ async function main() {
   });
   await sync.start();
 
+  // Vision events -> disk spool -> server
+  const spool = new Spool<SpooledEvent>(join(env.STATE_DIR, 'spool'));
+  await spool.init();
+  const forwarder = new Forwarder({ serverUrl: env.SERVER_URL, token: env.EDGE_TOKEN, spool, snapshotDir: env.SNAPSHOT_DIR });
+  const mqttClient = connectMqtt(env.MQTT_URL, env.MQTT_TOPIC_PREFIX, forwarder);
+  const drainTimer = setInterval(() => void forwarder.drain(), 5000);
+
   const stop = () => {
     logger.info('edge stopping');
     sync.stop();
-    process.exit(0);
+    clearInterval(drainTimer);
+    mqttClient.end(false, {}, () => process.exit(0));
+    setTimeout(() => process.exit(0), 3000).unref();
   };
   process.on('SIGTERM', stop);
   process.on('SIGINT', stop);

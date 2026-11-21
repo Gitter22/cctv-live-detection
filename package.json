@@ -15,7 +15,7 @@
     "logs": "docker compose logs -f",
     "logs:vision": "docker compose logs -f vision",
     "events": "docker compose exec mosquitto mosquitto_sub -v -t 'cctv/v1/#'",
-    "probe": "docker compose run --rm vision python -m vision.probe",
+    "probe": "docker compose run --rm -v ./data/probe:/data/snapshots/probe vision python -m vision.probe",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "npm run test --workspaces --if-present",

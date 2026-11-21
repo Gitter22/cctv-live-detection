@@ -14,11 +14,13 @@ export function createApp() {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', 'loopback');
-  app.use(express.json({ limit: '1mb' }));
-  app.use(cookieParser());
-  // Edge agents: token auth, no cookies, no browser.
+  // Edge agents: token auth, no cookies, no browser. Mounted before the 1 MB JSON parser
+  // because event uploads carry snapshots (route-specific 4 MB limit).
   app.use('/edge/v1', edgeApiRouter);
   app.use('/edge', (_req, _res, next) => next(notFound('Unknown edge route')));
+
+  app.use(express.json({ limit: '1mb' }));
+  app.use(cookieParser());
 
   app.use('/api', csrfGuard, authenticate);
 

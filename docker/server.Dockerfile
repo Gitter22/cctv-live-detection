@@ -21,6 +21,8 @@ COPY --from=build /repo/packages/shared packages/shared
 COPY --from=build /repo/apps/server/package.json apps/server/
 COPY --from=build /repo/apps/server/prisma apps/server/prisma
 COPY --from=build /repo/apps/server/dist apps/server/dist
+# Snapshot store: owned by "node" so a new named volume mounted here inherits that owner.
+RUN mkdir -p /data/store && chown node:node /data/store
 WORKDIR /repo/apps/server
 USER node
 EXPOSE 4000

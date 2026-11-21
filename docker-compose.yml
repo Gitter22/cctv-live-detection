@@ -104,7 +104,7 @@ services:
     volumes:
       - edge-gen:/gen
       - edge-state:/state
-      - ./data/snapshots:/data/snapshots:ro
+      - snapshots:/data/snapshots:ro
     depends_on:
       mosquitto:
         condition: service_healthy
@@ -132,7 +132,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     volumes:
       - edge-gen:/gen:ro
-      - ./data/snapshots:/data/snapshots
+      - snapshots:/data/snapshots
     depends_on:
       go2rtc:
         condition: service_healthy
@@ -140,6 +140,9 @@ services:
         condition: service_healthy
 
 volumes:
+  # Vision writes event snapshots here; the edge reads and uploads them. A named volume
+  # (not a host folder): host bind mounts can go stale after Docker Desktop restarts on WSL.
+  snapshots:
   edge-gen:
   edge-state:
   pgdata:
