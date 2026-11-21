@@ -47,3 +47,9 @@ export function errorMiddleware(err: unknown, req: Request, res: Response, _next
   logger.error({ err, path: req.path }, 'unhandled error');
   res.status(500).json({ error: { code: 'internal', message: 'Internal server error' } });
 }
+
+/** A single string route/query param (Express 5 types allow arrays). */
+export function param(req: Request, name: string): string | undefined {
+  const v = (req.params as Record<string, unknown>)[name];
+  return typeof v === 'string' ? v : undefined;
+}

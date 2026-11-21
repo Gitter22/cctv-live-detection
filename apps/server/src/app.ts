@@ -4,6 +4,7 @@ import { authenticate, csrfGuard } from './auth/session';
 import { errorMiddleware, notFound } from './lib/http';
 import { authRouter } from './routes/auth';
 import { healthRouter } from './routes/health';
+import { orgsRouter } from './routes/orgs';
 
 export function createApp() {
   const app = express();
@@ -15,6 +16,7 @@ export function createApp() {
 
   app.use('/api', healthRouter);
   app.use('/api', authRouter);
+  app.use('/api', orgsRouter);
 
   app.use('/api', (_req, _res, next) => next(notFound('Unknown API route')));
   app.use(errorMiddleware);
