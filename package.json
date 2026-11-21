@@ -21,7 +21,8 @@
     "test": "npm run test --workspaces --if-present",
     "dev:server": "npm run dev -w apps/server",
     "build": "npm run build --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "seed": "npm run seed -w apps/server"
   },
   "devDependencies": {
     "prettier": "3.10.1"

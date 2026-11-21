@@ -2,8 +2,8 @@
  * One-time migration of the step-1 home setup into the database (idempotent).
  *
  * Reads:  NVR_HOST / NVR_RTSP_PORT / NVR_USER / NVR_PASSWORD (URL-encoded) from the root .env,
- *         config/vision.yaml   (camera ids, labels, zones, lines, detection)
- *         config/go2rtc.yaml   (NVR channel of each camera stream)
+ *         services/vision/vision.example.yaml   (camera ids, labels, zones, lines, detection)
+ *         NVR channel = trailing number of the camera id ("entrance-1" -> channel 1)
  * Creates: organization "home" + site "home" (Asia/Kolkata), source "Home NVR" (Dahua),
  *          the cameras with zones/lines, owner membership for HOME_OWNER_EMAIL (default:
  *          SUPERADMIN_EMAIL), and one edge "home-edge" whose token + site id are written to
@@ -52,8 +52,7 @@ async function main() {
   const owner = ownerEmail ? await db.user.findUnique({ where: { email: ownerEmail } }) : admin;
   if (!owner) throw new Error(`Owner ${ownerEmail} does not exist (create it or set HOME_OWNER_EMAIL)`);
 
-  const vision = parse(readFileSync(join(ROOT, 'config/vision.yaml'), 'utf8')) as VisionYaml;
-  const go2rtc = parse(readFileSync(join(ROOT, 'config/go2rtc.yaml'), 'utf8')) as { streams: Record<string, string> };
+  const vision = parse(readFileSync(join(ROOT, 'services/vision/vision.example.yaml'), 'utf8')) as VisionYaml;
 
   // ---- organization + site
   const org = await db.organization.upsert({ where: { slug: 'home' }, update: {}, create: { name: 'Home', slug: 'home' } });
@@ -95,9 +94,8 @@ async function main() {
     motionGate: vision.pipeline?.motion_gate ?? true,
   };
   for (const c of vision.cameras) {
-    const url = go2rtc.streams[c.stream];
-    const channel = Number(/channel=(\d+)/.exec(url ?? '')?.[1]);
-    if (!channel) throw new Error(`No NVR channel found for stream ${c.stream} in go2rtc.yaml`);
+    const channel = Number(/-(\d+)$/.exec(c.id)?.[1]);
+    if (!channel) throw new Error(`Camera id ${c.id} must end with its NVR channel, e.g. entrance-1`);
     const camera = await db.camera.upsert({
       where: { siteId_key: { siteId: site.id, key: c.id } },
       update: { label: c.name ?? c.id, sourceId: source.id, channel },

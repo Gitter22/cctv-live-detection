@@ -38,8 +38,8 @@ Step 1 (done, `1d0a1ca`): monorepo, go2rtc, Mosquitto, Postgres, vision service 
 | [x] | B3 | **Vision from config.** Edge writes `vision.yaml`; vision watches it and hot-reloads only the changed cameras | Changing a zone in the API changes vision behaviour without a restart |
 | [x] | B4 | **Event forwarding.** Edge subscribes to local MQTT, uploads events + snapshots to `POST /edge/v1/events`; server stores Event + snapshot (disk store), idempotent by event ID; edge buffers on disk while the server is down | Real camera event appears in Postgres with its snapshot; survives a server restart |
 | [x] | B5 | **Health and thumbnails.** Edge heartbeat (version, camera status, metrics) → server; periodic camera thumbnails for the zone editor | `Edge.lastSeenAt` and camera online state update; thumbnails stored |
-| [ ] | B6 | **Compose split.** `server` and `edge` Compose profiles; NVR credentials removed from `.env`; docs updated | Fresh `docker compose up` runs home cameras purely from server config |
-| [ ] | **B✓** | **Milestone: push** | |
+| [x] | B6 | **Compose split.** `server` and `edge` Compose profiles; NVR credentials removed from `.env`; docs updated | Fresh `docker compose up` runs home cameras purely from server config |
+| [x] | **B✓** | **Milestone: push** | |
 
 ## Phase C: Rules and alerts
 

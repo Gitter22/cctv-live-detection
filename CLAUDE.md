@@ -6,7 +6,9 @@ Read `cctv-alerts-handover.md` for the original goal and hardware, and **`docs/A
 - **`services/vision` never touches the database.** Node (`apps/server`, Prisma) owns the schema and migrations.
 - **go2rtc is the only component that connects to the NVR.** Vision reads `rtsp://go2rtc:8554/<stream>`.
 - **Don't change the NVR's stream settings.** Handle everything in software.
-- **Secrets live only in the root `.env`** (gitignored, password URL-encoded). Never put them in code, config files or chat. `config/go2rtc.yaml` uses `${NVR_PASSWORD}` substitution.
+- **Camera/NVR credentials live only in the server DB**, AES-256-GCM encrypted (`SECRETS_KEY`), write-only in the API, decrypted only for the site's edge. Other secrets (JWT, SECRETS_KEY, edge token, DB password) live in the root `.env` (gitignored). Never put secrets in code, config files or chat.
+- **Edge generates go2rtc.yaml and vision.yaml** from the server config (volume `edge-gen`); there are no hand-written camera configs. `services/vision/vision.example.yaml` is only for running vision standalone.
+- Compose profiles: `server` (hub) and `edge` (site box); `COMPOSE_PROFILES` in `.env`.
 - The event contract is `packages/shared/schemas/vision-event.v1.json` (Python) mirrored by the zod schema in `packages/shared/src/vision-event.ts`; a test keeps them in sync. Bump the version for breaking changes.
 - **No Ultralytics/YOLO (AGPL).** Use Apache/MIT models behind `vision/detectors/` (registry in `__init__.py`).
 - Server: CommonJS. `packages/shared` must work from both CJS and bundlers.
@@ -16,4 +18,4 @@ Read `cctv-alerts-handover.md` for the original goal and hardware, and **`docs/A
 - PyPI and GitHub can be very slow on the home network (an ISP routing issue), while Hugging Face is fast. Prefer `uv ... --offline` when the cache already has the packages.
 - **Dahua locks accounts after a few failed logins.** Don't leave vision retrying with a wrong password.
 
-Run vision tests: `cd services/vision && uv run python -m unittest discover -s tests -v`
+Tests: `npm test -w apps/server` (needs Postgres from compose; uses a separate `<db>_test` DB), `npm test -w apps/edge`, `npm test -w packages/shared`, vision: `cd services/vision && uv run python -m unittest discover -s tests -v`

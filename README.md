@@ -1,87 +1,82 @@
 # CCTV alerts
 
-Real-time alerting for home CCTV, built so the same detection core can later serve shops and factories.
+Real-time alerting for CCTV across many organizations and sites. A **server** (the hub) manages organizations, sites, cameras, zones and rules. An **edge** at each site connects to the local NVR and cameras, runs detection and sends events up. Design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Progress: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
 
 ```
-NVR (192.168.1.17) ──RTSP──▶ go2rtc ──RTSP──▶ services/vision ──MQTT──▶ apps/server (rules) ──▶ web / mobile
-                              │                  │  detect (D-FINE)              │
-                              │                  │  track (ByteTrack-style)      └─ Postgres + pgvector
-                              │                  │  zones / lines
-                              │                  └─ snapshots → data/snapshots/
-                              └─ live view (WebRTC / HLS) for the apps
+             SERVER (hub)                                EDGE (one per site, outbound only)
+ web/mobile ─▶ apps/server ── Postgres+pgvector     ◀── apps/edge ── polls config, uploads events
+              auth · orgs · sites · cameras · rules     │  writes go2rtc.yaml + vision.yaml
+              encrypted camera credentials               ├─ go2rtc ◀── RTSP ── NVR / cameras
+              events + snapshots                         └─ vision (detect, track, zones) ─MQTT─▶ edge
 ```
 
-- **go2rtc** is the only thing that connects to the NVR.
-- **services/vision** (Python) publishes *generic* events (`zone.enter`, `zone.exit`, `line.cross`, `camera.status`). It contains no business rules and never touches the database.
-- **apps/server** (step 2) turns events into alerts using config-driven rules.
-- The event contract lives in [`packages/shared/schemas/vision-event.v1.json`](packages/shared/schemas/vision-event.v1.json).
+| Part | What it does |
+| --- | --- |
+| `apps/server` | TypeScript/Express API, Prisma. Users, organizations, sites, sources (NVR/camera credentials, encrypted), cameras, zones, edges, event ingest. |
+| `apps/edge` | Edge agent. Knows only `SERVER_URL`, `EDGE_SITE_ID`, `EDGE_TOKEN`. Pulls its site's config, generates go2rtc + vision config, forwards events through a disk spool, sends health and thumbnails. |
+| `services/vision` | Python detection core (D-FINE, own tracker, motion gate, zones). Generic events only, no business rules, no database. |
+| `packages/shared` | zod schemas shared by everything (API bodies, VisionEvent, edge config). |
+| go2rtc | The only component that talks to cameras/NVRs. Restreams for vision and live view. |
 
-## Setup
+## Run it (this laptop: server + edge)
 
-1. Create your env file (gitignored) and set the NVR password **URL-encoded**:
+1. **Env file.** Copy and fill in (`.env` is gitignored):
    ```bash
    cp .env.example .env
-   node -e "console.log(encodeURIComponent(process.argv[1]))" 'your-password'
+   openssl rand -hex 32   # paste as JWT_SECRET
+   openssl rand -hex 32   # paste as SECRETS_KEY (never change it later: stored credentials depend on it)
    ```
-   Paste the output into `NVR_PASSWORD=` in `.env`. Also change `POSTGRES_PASSWORD`.
-2. Start everything:
+   Also set `POSTGRES_PASSWORD` and `SUPERADMIN_EMAIL` / `SUPERADMIN_PASSWORD`. `COMPOSE_PROFILES=server,edge` runs both halves here.
+2. **Start the hub** and create the platform admin:
    ```bash
-   npm run up
+   docker compose up -d postgres server
+   npm install
+   npm run seed -w apps/server
    ```
-3. Check the streams: open http://localhost:1984 (go2rtc) and click a stream. Then grab a still from every channel:
+3. **Describe a site** (organization → site → source → cameras → zones) through the API (the web app comes in phase D). For the original home setup there's a one-time import: `npm run import:home -w apps/server`. It also registers the home edge and writes `EDGE_SITE_ID` / `EDGE_TOKEN` into `.env`.
+4. **Start the edge:**
    ```bash
-   npm run probe
+   docker compose up -d
    ```
-   The images land in `data/snapshots/probe/`. Use them to name the cameras and draw zones in [`config/vision.yaml`](config/vision.yaml).
-4. Watch the events:
-   ```bash
-   npm run events
-   ```
-   Snapshots are written to `data/snapshots/<camera>/<date>/<event id>.jpg`.
+   The edge fetches the config, go2rtc gets its streams, and vision starts detecting. Change a camera or zone in the API and the edge applies it within ~10 s (vision restarts only that camera).
 
-## MQTT topics (prefix `cctv/v1`)
+### A remote site (edge only)
 
-| Topic | Contents |
-| --- | --- |
-| `events/<camera>/<type>` | Every VisionEvent |
-| `cameras/<camera>/status` | Latest `camera.status` (retained) |
-| `metrics/<camera>` | decode fps, detect fps, inference ms, frame age (retained, every 30 s) |
-| `service/vision` | `{"online": true/false}` (retained, last will) |
+On the site's box: `COMPOSE_PROFILES=edge`, `EDGE_SERVER_URL=https://<hub>`, plus that site's `EDGE_SITE_ID` and `EDGE_TOKEN` (the token is shown once when the edge is registered). Only outbound connections are needed, no port forwarding.
 
-## Tuning
-
-- **Detector:** `DFINE_VARIANT` in `.env` (`n`, `s`, `m`, `l`, `x`), then `docker compose build vision`. Other models plug in through `services/vision/vision/detectors/`.
-- **Detect rate:** `pipeline.detect_fps` in `config/vision.yaml` is per camera. One CPU detector is shared by all cameras. If it can't keep up, each camera gets fewer frames, but they are always fresh; there's never a queue.
-- **Debounce:** `confirm_frames` and `exit_after_s`.
-
-## Python development (uv)
-
-The vision service is a [uv](https://docs.astral.sh/uv/) project: `services/vision/pyproject.toml` lists the dependencies and `uv.lock` pins their exact versions (like `package.json` and `package-lock.json`).
+## Useful commands
 
 ```bash
-cd services/vision
-uv sync                                  # create .venv with the locked packages
-uv run python -m unittest discover -s tests -v
-uv add <package>                         # add a dependency (updates uv.lock)
+npm run logs            # all logs
+npm run logs:vision
+npm run events          # watch vision's MQTT events at the edge
+npm run probe           # one still per camera stream -> data/probe/
 ```
 
-In Docker, the image runs `uv sync --frozen`. Setting `UV_CACHE_HOST_DIR` in `.env` lets the build reuse your local download cache.
+Live streams: http://localhost:1984 (go2rtc UI; LAN only for now).
 
-Detector smoke test on an image (prints timing and writes `data/test.out.jpg`):
+## Tests
 
 ```bash
-docker compose run --rm --no-deps -v "$PWD/data:/data" vision python tools/detect_image.py /data/test.jpg
+npm test -w apps/server     # API + DB (separate <db>_test database)
+npm test -w apps/edge
+npm test -w packages/shared
+cd services/vision && uv run python -m unittest discover -s tests -v
 ```
 
-## Performance (i7-11th gen CPU, measured)
+## Python (uv)
+
+`services/vision` is a [uv](https://docs.astral.sh/uv/) project (`pyproject.toml` + `uv.lock`): `uv sync`, `uv run ...`, `uv add <pkg>`. The Docker build runs `uv sync --frozen`; set `UV_CACHE_HOST_DIR` in `.env` to reuse your local download cache.
+
+## Performance (i7-11th gen CPU)
 
 | Model | Input | ms/frame |
 | --- | --- | --- |
-| D-FINE-S (default) | 640×384 (sub stream shape) | ~150 to 210 |
-| D-FINE-S | 640×640 | ~230 to 270 |
+| D-FINE-S (default) | 640×384 (sub stream shape) | ~150–210 |
+| D-FINE-S | 640×640 | ~230–270 |
 | D-FINE-N | 640×384 | ~58, but scores too low to be useful |
 
-That's about 5 detections per second shared across all cameras. The **motion gate** runs the detector only when something moves, when an object is being tracked, or every 2 s, so quiet cameras cost almost nothing.
+The motion gate runs the detector only when something moves, something is tracked, or every 2 s.
 
 ## Licences
 

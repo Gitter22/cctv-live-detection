@@ -1,8 +1,12 @@
-# services/vision config. Geometry and detection tuning only: NO business rules here.
+# EXAMPLE / standalone vision config. In the full system the edge agent GENERATES this file
+# from the server config (cameras, zones, per-camera detection) and vision hot-reloads it.
+# Use this file only to run vision on its own: VISION_CONFIG=services/vision/vision.example.yaml
+#
+# Geometry and detection tuning only: NO business rules here.
 # ("Person at gate at night = danger" belongs in the rules layer, apps/server.)
 #
 # Coordinates are normalised 0..1 (x right, y down) so they survive resolution changes.
-# Get a frame to draw zones on:  npm run probe   -> data/snapshots/probe/<camera id>.jpg
+# Get a frame to draw zones on:  npm run probe   -> data/probe/<camera id>.jpg
 
 detector:
   type: dfine # registry key: services/vision/vision/detectors/__init__.py
