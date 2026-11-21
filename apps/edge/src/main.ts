@@ -7,6 +7,7 @@ import { Forwarder, connectMqtt, type SpooledEvent } from './forwarder';
 import { applyGo2rtc } from './go2rtc';
 import { HealthCollector, sendHeartbeat, uploadThumbnails } from './health';
 import { Spool } from './spool';
+import { webrtcOfferHandler } from './webrtc';
 import { applyVision } from './vision-config';
 import { logger } from './logger';
 
@@ -25,7 +26,11 @@ async function main() {
     applying = applying.then(async () => {
       try {
         // go2rtc first (streams must exist before vision connects to them), then vision.
-        await applyGo2rtc(cfg, { path: join(env.GEN_DIR, 'go2rtc.yaml'), apiUrl: env.GO2RTC_API });
+        await applyGo2rtc(cfg, {
+          path: join(env.GEN_DIR, 'go2rtc.yaml'),
+          apiUrl: env.GO2RTC_API,
+          webrtc: { candidates: env.EDGE_WEBRTC_CANDIDATES, iceServers: env.EDGE_ICE_SERVERS },
+        });
         await applyVision(cfg, { path: join(env.GEN_DIR, 'vision.yaml'), go2rtcRtsp: env.GO2RTC_RTSP });
       } catch (err) {
         logger.error({ err }, 'applying config failed');
@@ -36,6 +41,18 @@ async function main() {
 
   // Instant config pushes (and live-view signalling) over an outbound WebSocket.
   const control = new ControlChannel(env.SERVER_URL, env.EDGE_TOKEN, () => void sync.pollOnce());
+  control.handlers.set(
+    'webrtc.offer',
+    webrtcOfferHandler(env.GO2RTC_API, () => {
+      const keys = new Set<string>();
+      for (const c of sync.current?.cameras ?? []) {
+        if (!c.enabled) continue;
+        keys.add(c.key).add(`${c.key}_h264`);
+        if (c.streams.main) keys.add(`${c.key}_main`);
+      }
+      return keys;
+    }),
+  );
   control.start();
 
   // Vision events -> disk spool -> server

@@ -66,7 +66,7 @@ describe('edge health', () => {
 describe('live view (LAN)', () => {
   it('returns player URLs after the permission check, only while the edge reports a live URL', async () => {
     const { org, agent, siteBase, cam, token } = await setup();
-    expect((await agent.get(`${siteBase}/cameras/${cam.id}/live`)).status).toBe(404); // no heartbeat yet
+    expect((await agent.get(`${siteBase}/cameras/${cam.id}/live`)).body.sd).toBeNull(); // no heartbeat yet
     await request(app)
       .post('/edge/v1/heartbeat')
       .set('Authorization', `Bearer ${token}`)

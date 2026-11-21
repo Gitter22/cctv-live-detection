@@ -21,6 +21,16 @@ const EnvSchema = z.object({
   SNAPSHOT_DIR: z.string().default('/data/snapshots'),
   /** go2rtc player URL as browsers reach it, e.g. http://192.168.1.50:1984 (LAN live view). */
   EDGE_LIVE_URL: z.string().url().optional(),
+  /** WebRTC: addresses viewers can reach this site's go2rtc at, comma separated (host:port or stun:8555). */
+  EDGE_WEBRTC_CANDIDATES: z
+    .string()
+    .default('127.0.0.1:8555,stun:8555')
+    .transform((s) => s.split(',').map((x) => x.trim()).filter(Boolean)),
+  /** STUN/TURN servers go2rtc uses (JSON array, same format as browsers' iceServers). */
+  EDGE_ICE_SERVERS: z
+    .string()
+    .default('[{"urls":["stun:stun.l.google.com:19302"]}]')
+    .transform((s) => JSON.parse(s) as unknown[]),
   /** How often to upload a still per camera (zone editor). */
   THUMBNAIL_INTERVAL_S: z.coerce.number().min(60).default(600),
   LOG_LEVEL: z

@@ -25,7 +25,7 @@ const cfg = (cameras: ReturnType<typeof cam>[]): EdgeConfig => ({
 describe('go2rtc config', () => {
   it('maps cameras to sub and _main streams, skipping disabled ones', () => {
     const s = go2rtcStreams(cfg([cam('entrance-1', 'rtsp://a', 'rtsp://a-main'), cam('off-2', 'rtsp://b', null, false)]));
-    expect(s).toEqual({ 'entrance-1': 'rtsp://a', 'entrance-1_main': 'rtsp://a-main' });
+    expect(s).toEqual({ 'entrance-1': 'rtsp://a', 'entrance-1_main': 'rtsp://a-main', 'entrance-1_h264': 'ffmpeg:entrance-1#video=h264' });
   });
 
   it('writes the file (0600) and restarts only when streams change', async () => {

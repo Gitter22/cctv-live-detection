@@ -74,3 +74,53 @@ describe('edge control channel', () => {
     }
   });
 });
+
+describe('live view signalling', () => {
+  it('relays the offer to the site edge after the permission check', async () => {
+    const { setEdgeHub } = await import('../src/edge/control');
+    const server = app.listen(0);
+    const hub = new EdgeHub().attach(server);
+    setEdgeHub(hub);
+    const port = (server.address() as AddressInfo).port;
+    try {
+      const { org, site } = await makeOrg();
+      const u = await makeUser();
+      await addMember(u.id, org.id, 'VIEWER');
+      const admin = await makeUser();
+      await addMember(admin.id, org.id, 'ADMIN');
+      const a = await agentFor(admin.email);
+      const siteBase = `/api/orgs/${org.id}/sites/${site.id}`;
+      const cam = (await a.post(`${siteBase}/cameras`).send({ key: 'entrance-1', label: 'E', subUrl: 'rtsp://x/1' })).body.camera;
+      const token = (await a.post(`${siteBase}/edges`).send({ name: 'e' })).body.token as string;
+      const viewer = await agentFor(u.email);
+      const offer = 'v=0\r\no=- 1 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\n';
+
+      expect((await viewer.post(`${siteBase}/cameras/${cam.id}/webrtc`).send({ sdp: offer })).status).toBe(503); // edge offline
+
+      const edge = await open(port, token);
+      const seen: { src: string }[] = [];
+      edge.ws.on('message', (d) => {
+        const m = JSON.parse(d.toString());
+        if (m.type === 'request' && m.method === 'webrtc.offer') {
+          seen.push(m.params);
+          edge.ws.send(JSON.stringify({ type: 'response', id: m.id, ok: true, result: { sdp: 'v=0\r\nanswer' } }));
+        }
+      });
+      await until(() => hub.connected(site.id));
+      const res = await viewer.post(`${siteBase}/cameras/${cam.id}/webrtc`).send({ sdp: offer, variant: 'sd_h264' });
+      expect(res.status).toBe(200);
+      expect(res.body.sdp).toBe('v=0\r\nanswer');
+      expect(seen[0]!.src).toBe('entrance-1_h264');
+      const live = await viewer.get(`${siteBase}/cameras/${cam.id}/live`);
+      expect(live.body.webrtc).toMatchObject({ available: true, iceServers: expect.any(Array) });
+
+      const pa = await agentFor((await makeUser({ superAdmin: true })).email);
+      expect((await pa.post(`${siteBase}/cameras/${cam.id}/webrtc`).send({ sdp: offer })).status).toBe(403);
+      edge.ws.close();
+    } finally {
+      setEdgeHub(null);
+      hub.close();
+      server.close();
+    }
+  });
+});

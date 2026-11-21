@@ -20,6 +20,18 @@ const EnvSchema = z.object({
     .transform((s) => s.split(',').map((o) => o.trim()).filter(Boolean)),
   /** Where event snapshots are stored on disk. */
   SNAPSHOT_STORE: z.string().default('./data/store'),
+  /** ICE servers handed to viewers for live view (JSON array of RTCIceServer). TURN added in F3. */
+  ICE_SERVERS: z
+    .string()
+    .default('[{"urls":["stun:stun.l.google.com:19302"]}]')
+    .transform((s, ctx) => {
+      try {
+        return JSON.parse(s) as { urls: string | string[]; username?: string; credential?: string }[];
+      } catch {
+        ctx.addIssue({ code: 'custom', message: 'ICE_SERVERS must be a JSON array' });
+        return z.NEVER;
+      }
+    }),
   SUPERADMIN_EMAIL: z.string().email().optional(),
   SUPERADMIN_PASSWORD: z.string().min(10).optional(),
   SUPERADMIN_NAME: z.string().default('Platform Admin'),

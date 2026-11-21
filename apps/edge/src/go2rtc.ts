@@ -15,16 +15,20 @@ export function go2rtcStreams(config: EdgeConfig): Record<string, string> {
     if (!c.enabled) continue;
     streams[c.key] = c.streams.sub;
     if (c.streams.main) streams[`${c.key}_main`] = c.streams.main;
+    // H.264 copy for browsers without H.265 WebRTC; go2rtc only transcodes while someone watches.
+    streams[`${c.key}_h264`] = `ffmpeg:${c.key}#video=h264`;
   }
   return streams;
 }
 
-export function renderGo2rtcYaml(config: EdgeConfig): string {
+export function renderGo2rtcYaml(config: EdgeConfig, webrtc: { candidates?: string[]; iceServers?: unknown[] } = {}): string {
   const doc = {
     streams: go2rtcStreams(config),
     api: { listen: ':1984' },
     rtsp: { listen: ':8554' },
-    webrtc: { listen: ':8555' },
+    // candidates: addresses viewers can reach go2rtc at (go2rtc runs in Docker, its own IP isn't
+    // reachable). "stun:8555" = discover the public address via STUN for remote viewers.
+    webrtc: { listen: ':8555', ...(webrtc.candidates?.length ? { candidates: webrtc.candidates } : {}), ...(webrtc.iceServers?.length ? { ice_servers: webrtc.iceServers } : {}) },
     log: { level: 'info' },
   };
   return (
@@ -38,6 +42,7 @@ export interface Go2rtcApplyOptions {
   path: string;
   apiUrl: string;
   fetchImpl?: typeof fetch;
+  webrtc?: { candidates?: string[]; iceServers?: unknown[] };
 }
 
 /** Write the config if streams changed and restart go2rtc. Returns true if go2rtc was restarted. */
@@ -49,12 +54,19 @@ export async function applyGo2rtc(config: EdgeConfig, opts: Go2rtcApplyOptions):
   } catch {
     // no file yet
   }
-  if (current && sameStreams(current, wanted)) return false;
+  const text = renderGo2rtcYaml(config, opts.webrtc);
+  let currentText = '';
+  try {
+    currentText = await readFile(opts.path, 'utf8');
+  } catch {
+    // none
+  }
+  if (current && sameStreams(current, wanted) && currentText === text) return false;
 
   await mkdir(dirname(opts.path), { recursive: true });
   const tmp = `${opts.path}.tmp`;
   // Contains camera credentials: owner-only permissions.
-  await writeFile(tmp, renderGo2rtcYaml(config), { mode: 0o600 });
+  await writeFile(tmp, text, { mode: 0o600 });
   await rename(tmp, opts.path);
   logger.info({ streams: Object.keys(wanted) }, 'go2rtc config written');
 

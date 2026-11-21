@@ -82,7 +82,7 @@ Step 1 (done, `1d0a1ca`): monorepo, go2rtc, Mosquitto, Postgres, vision service 
 | | ID | Task | Done when |
 | --- | --- | --- | --- |
 | [x] | F1 | **Edge control channel.** Persistent WebSocket from edge to server (config change push, commands) | Config change reaches the edge within 1 s |
-| [ ] | F2 | **Live view signalling.** Server relays WebRTC offer/answer to the site's go2rtc over F1, with short-lived camera tokens; web player uses it | Live view works without direct LAN access to go2rtc |
+| [x] | F2 | **Live view signalling.** Server relays WebRTC offer/answer to the site's go2rtc over F1, with short-lived camera tokens; web player uses it | Live view works without direct LAN access to go2rtc |
 | [ ] | F3 | **TURN relay.** Optional coturn in Compose; ICE servers config to clients | Live view works with UDP blocked between peers |
 | [ ] | F4 | **Mobile scaffold.** `apps/mobile` Expo + TypeScript, auth, shared API client | Runs in Expo Go / dev build |
 | [ ] | F5 | **Mobile alerts.** Alert feed, detail with snapshot, acknowledge/close | Same alerts as the web |

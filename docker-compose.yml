@@ -121,6 +121,8 @@ services:
       MQTT_TOPIC_PREFIX: ${MQTT_TOPIC_PREFIX:-cctv/v1}
       # Where browsers reach this site's go2rtc player (LAN live view)
       EDGE_LIVE_URL: ${EDGE_LIVE_URL:-http://localhost:1984}
+      # Where viewers reach go2rtc's WebRTC port (this machine's browser: 127.0.0.1)
+      EDGE_WEBRTC_CANDIDATES: ${EDGE_WEBRTC_CANDIDATES:-127.0.0.1:8555,stun:8555}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     volumes:
       - edge-gen:/gen

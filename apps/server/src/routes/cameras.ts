@@ -11,7 +11,11 @@ import {
 import type { Camera, Line, Prisma, Source, Zone } from '@prisma/client';
 import { Router } from 'express';
 import { type OrgAccess, loadSite, requireCap } from '../access/access';
+import { edgeHub } from '../edge/control';
 import { siteCameraStatus, siteLiveUrl, thumbnailKey } from '../edge/health';
+import { env } from '../config/env';
+import { z } from 'zod';
+import { HttpError } from '../lib/http';
 import { audit } from '../lib/audit';
 import { db } from '../lib/db';
 import { badRequest, conflict, notFound, param } from '../lib/http';
@@ -135,10 +139,38 @@ camerasRouter.get(`${base}/:cameraId/live`, async (req, res) => {
   const cam = await loadCamera(access, param(req, 'siteId'), param(req, 'cameraId'));
   if (!cam.enabled) throw notFound('Camera is disabled');
   const base = await siteLiveUrl(cam.siteId);
-  if (!base) throw notFound('Live view is not available: the edge is offline or EDGE_LIVE_URL is not set on it');
-  const player = (stream: string) => `${base.replace(/\/$/, '')}/stream.html?src=${encodeURIComponent(stream)}&mode=webrtc,mse,hls,mjpeg`;
+  const player = (stream: string) => (base ? `${base.replace(/\/$/, '')}/stream.html?src=${encodeURIComponent(stream)}&mode=webrtc,mse,hls,mjpeg` : null);
   res.setHeader('Cache-Control', 'no-store');
-  res.json({ sd: player(cam.key), hd: player(`${cam.key}_main`) });
+  res.json({
+    // Preferred: WebRTC negotiated through the server (works without LAN access to the site).
+    webrtc: { available: !!edgeHub?.connected(cam.siteId), iceServers: env().ICE_SERVERS },
+    // Fallback: the site's own go2rtc player (same LAN / Tailscale only).
+    sd: player(cam.key),
+    hd: player(`${cam.key}_main`),
+  });
+});
+
+const WebrtcBody = z.object({ sdp: z.string().min(20).max(20_000), variant: z.enum(['sd', 'hd', 'sd_h264']).default('sd') });
+
+/**
+ * Live view signalling: relay the viewer's WebRTC offer to the site's go2rtc over the edge
+ * control channel and return the answer. Fresh permission check on every request.
+ */
+camerasRouter.post(`${base}/:cameraId/webrtc`, async (req, res) => {
+  const { access } = await orgCtx(req);
+  requireCap(access, 'footage.read');
+  const cam = await loadCamera(access, param(req, 'siteId'), param(req, 'cameraId'));
+  if (!cam.enabled) throw notFound('Camera is disabled');
+  const { sdp, variant } = WebrtcBody.parse(req.body);
+  const src = variant === 'hd' ? `${cam.key}_main` : variant === 'sd_h264' ? `${cam.key}_h264` : cam.key;
+  if (!edgeHub?.connected(cam.siteId)) throw new HttpError(503, 'The site is offline: its edge is not connected', 'site_offline');
+  try {
+    const answer = await edgeHub.request<{ sdp: string }>(cam.siteId, 'webrtc.offer', { src, sdp }, 15_000);
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ sdp: answer.sdp });
+  } catch (err) {
+    throw new HttpError(502, `Live view failed: ${(err as Error).message}`, 'edge_error');
+  }
 });
 
 camerasRouter.patch(`${base}/:cameraId`, async (req, res) => {
