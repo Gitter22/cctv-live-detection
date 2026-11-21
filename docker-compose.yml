@@ -1,0 +1,88 @@
+name: ${COMPOSE_PROJECT_NAME:-cctv}
+
+services:
+  # The ONLY component that talks to the NVR. Everything else reads from here.
+  go2rtc:
+    image: alexxit/go2rtc:1.9.15
+    restart: unless-stopped
+    environment:
+      NVR_HOST: ${NVR_HOST}
+      NVR_RTSP_PORT: ${NVR_RTSP_PORT:-554}
+      NVR_USER: ${NVR_USER}
+      NVR_PASSWORD: ${NVR_PASSWORD}
+    volumes:
+      - ./config/go2rtc.yaml:/config/go2rtc.yaml:ro
+    ports:
+      - '${GO2RTC_API_PORT:-1984}:1984' # web UI + API (live view)
+      - '${GO2RTC_RTSP_PORT:-8554}:8554' # RTSP restream
+      - '${GO2RTC_WEBRTC_PORT:-8555}:8555/tcp' # WebRTC
+      - '${GO2RTC_WEBRTC_PORT:-8555}:8555/udp'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:1984/api']
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0.23
+    restart: unless-stopped
+    volumes:
+      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-data:/mosquitto/data
+    ports:
+      - '${MQTT_PORT:-1883}:1883'
+    healthcheck:
+      test: ['CMD', 'mosquitto_sub', '-t', '$$SYS/broker/uptime', '-C', '1', '-W', '3']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Owned by apps/server (Prisma) from step 2. The vision service never touches it.
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - '${POSTGRES_PORT:-5434}:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  vision:
+    build:
+      context: .
+      dockerfile: docker/vision.Dockerfile
+      # Optional: reuse the host's uv download cache (set UV_CACHE_HOST_DIR in .env).
+      additional_contexts:
+        uvcache: ${UV_CACHE_HOST_DIR:-docker/empty-cache}
+      args:
+        DFINE_VARIANT: ${DFINE_VARIANT:-s}
+    restart: unless-stopped
+    environment:
+      MQTT_HOST: mosquitto
+      MQTT_PORT: 1883
+      MQTT_TOPIC_PREFIX: ${MQTT_TOPIC_PREFIX:-cctv/v1}
+      GO2RTC_RTSP: rtsp://go2rtc:8554
+      VISION_CONFIG: /config/vision.yaml
+      VISION_THREADS: ${VISION_THREADS:-4}
+      SNAPSHOT_DIR: /data/snapshots
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./config/vision.yaml:/config/vision.yaml:ro
+      - ./data/snapshots:/data/snapshots
+    depends_on:
+      go2rtc:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  mosquitto-data:

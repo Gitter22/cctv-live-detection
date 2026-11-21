@@ -1,0 +1,28 @@
+# go2rtc: the only thing that connects to the NVR.
+# ${...} values come from the root .env (passed in by docker-compose).
+# go2rtc only opens an NVR connection while someone is watching a stream.
+#
+#   <name>       -> sub stream  (640x360 H.265)   : used for detection
+#   <name>_main  -> main stream (2304x1296 H.265) : used for face crops + HD live view
+# Names: <place>-<NVR channel>
+#
+# Web UI: http://localhost:1984  (click a stream to watch it)
+
+streams:
+  entrance-1: rtsp://${NVR_USER}:${NVR_PASSWORD}@${NVR_HOST}:${NVR_RTSP_PORT}/cam/realmonitor?channel=1&subtype=1
+  backyard-2: rtsp://${NVR_USER}:${NVR_PASSWORD}@${NVR_HOST}:${NVR_RTSP_PORT}/cam/realmonitor?channel=2&subtype=1
+  firstfloor-3: rtsp://${NVR_USER}:${NVR_PASSWORD}@${NVR_HOST}:${NVR_RTSP_PORT}/cam/realmonitor?channel=3&subtype=1
+  lastfloor-4: rtsp://${NVR_USER}:${NVR_PASSWORD}@${NVR_HOST}:${NVR_RTSP_PORT}/cam/realmonitor?channel=4&subtype=1
+  entrance-1_main: rtsp://${NVR_USER}:${NVR_PASSWORD}@${NVR_HOST}:${NVR_RTSP_PORT}/cam/realmonitor?channel=1&subtype=0
+  backyard-2_main: rtsp://${NVR_USER}:${NVR_PASSWORD}@${NVR_HOST}:${NVR_RTSP_PORT}/cam/realmonitor?channel=2&subtype=0
+  firstfloor-3_main: rtsp://${NVR_USER}:${NVR_PASSWORD}@${NVR_HOST}:${NVR_RTSP_PORT}/cam/realmonitor?channel=3&subtype=0
+  lastfloor-4_main: rtsp://${NVR_USER}:${NVR_PASSWORD}@${NVR_HOST}:${NVR_RTSP_PORT}/cam/realmonitor?channel=4&subtype=0
+
+api:
+  listen: ':1984'
+rtsp:
+  listen: ':8554'
+webrtc:
+  listen: ':8555'
+log:
+  level: info

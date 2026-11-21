@@ -1,0 +1,12 @@
+{
+  "name": "@cctv/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Event schema, types and topic names shared by vision, server, web and mobile",
+  "main": "src/index.js",
+  "files": ["src", "schemas"],
+  "exports": {
+    ".": "./src/index.js",
+    "./schemas/*": "./schemas/*"
+  }
+}

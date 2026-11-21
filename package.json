@@ -1,0 +1,26 @@
+{
+  "name": "cctv-alerts",
+  "private": true,
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "up": "docker compose up -d --build",
+    "down": "docker compose down",
+    "logs": "docker compose logs -f",
+    "logs:vision": "docker compose logs -f vision",
+    "events": "docker compose exec mosquitto mosquitto_sub -v -t 'cctv/v1/#'",
+    "probe": "docker compose run --rm vision python -m vision.probe",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "prettier": "3.10.1"
+  }
+}

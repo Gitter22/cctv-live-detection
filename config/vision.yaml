@@ -1,0 +1,67 @@
+# services/vision config. Geometry and detection tuning only: NO business rules here.
+# ("Person at gate at night = danger" belongs in the rules layer, apps/server.)
+#
+# Coordinates are normalised 0..1 (x right, y down) so they survive resolution changes.
+# Get a frame to draw zones on:  npm run probe   -> data/snapshots/probe/<camera id>.jpg
+
+detector:
+  type: dfine # registry key: services/vision/vision/detectors/__init__.py
+  model_path: /models/dfine.onnx
+  input_size: 640
+  confidence: 0.5 # sure detection: may start a track
+  low_confidence: 0.25 # weaker detections only keep existing tracks alive
+  # Only these classes are tracked and published (COCO names).
+  classes: [person, car, motorcycle, bicycle, dog, cat]
+
+pipeline:
+  detect_fps: 5 # per camera (max); always uses the freshest frame, never queues
+  confirm_frames: 3 # object must be in a zone this many detection frames before zone.enter
+  exit_after_s: 3 # zone.exit after the object has been out of the zone / lost this long
+  heartbeat_s: 30 # re-publish retained camera status + metrics this often
+  offline_after_s: 10 # no frame for this long -> camera.status offline
+  startup_grace_s: 30 # at startup, allow this long to connect before reporting offline
+  anchor: bottom_center # point of the box tested against zones (feet, for people)
+  snapshot_quality: 85
+  # Motion gate: only run the detector when pixels change, something is tracked,
+  # or every idle_detect_interval_s. Saves most of the CPU on quiet cameras.
+  motion_gate: true
+  motion_pixel_threshold: 25 # grey-level change (0-255) that counts as changed
+  motion_min_area: 0.002 # fraction of the frame that must change (0.2 %)
+  idle_detect_interval_s: 2
+
+cameras:
+  # id: used in events/topics (rules refer to it). stream: name in config/go2rtc.yaml.
+  # Zones are whole-frame for now; draw real ones on data/snapshots/probe/<camera id>.jpg.
+  - id: entrance-1
+    name: Entrance gate (NVR ch 1)
+    stream: entrance-1
+    zones:
+      - id: full_frame
+        polygon: [[0, 0], [1, 0], [1, 1], [0, 1]]
+    lines: []
+  - id: backyard-2
+    name: Backyard (NVR ch 2)
+    stream: backyard-2
+    zones:
+      - id: full_frame
+        polygon: [[0, 0], [1, 0], [1, 1], [0, 1]]
+    lines: []
+  - id: firstfloor-3
+    name: First floor balcony (NVR ch 3)
+    stream: firstfloor-3
+    zones:
+      - id: full_frame
+        polygon: [[0, 0], [1, 0], [1, 1], [0, 1]]
+    lines: []
+  - id: lastfloor-4
+    name: Terrace / last floor (NVR ch 4)
+    stream: lastfloor-4
+    zones:
+      - id: full_frame
+        polygon: [[0, 0], [1, 0], [1, 1], [0, 1]]
+    lines: []
+    # Example line (crossing counts once per track):
+    # lines:
+    #   - id: gate_line
+    #     start: [0.2, 0.7]
+    #     end: [0.8, 0.7]
