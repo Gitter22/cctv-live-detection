@@ -3,6 +3,7 @@ import { ConfigSync } from './config-sync';
 import { join } from 'node:path';
 import { loadEnv } from './env';
 import { applyGo2rtc } from './go2rtc';
+import { applyVision } from './vision-config';
 import { logger } from './logger';
 
 async function main() {
@@ -17,11 +18,15 @@ async function main() {
       logger.error({ got: cfg.site.id }, 'server config is for another site than EDGE_SITE_ID: ignoring');
       return;
     }
-    applying = applying.then(() =>
-      applyGo2rtc(cfg, { path: join(env.GEN_DIR, 'go2rtc.yaml'), apiUrl: env.GO2RTC_API }).catch((err) =>
-        logger.error({ err }, 'applying go2rtc config failed'),
-      ),
-    );
+    applying = applying.then(async () => {
+      try {
+        // go2rtc first (streams must exist before vision connects to them), then vision.
+        await applyGo2rtc(cfg, { path: join(env.GEN_DIR, 'go2rtc.yaml'), apiUrl: env.GO2RTC_API });
+        await applyVision(cfg, { path: join(env.GEN_DIR, 'vision.yaml'), go2rtcRtsp: env.GO2RTC_RTSP });
+      } catch (err) {
+        logger.error({ err }, 'applying config failed');
+      }
+    });
   });
   await sync.start();
 

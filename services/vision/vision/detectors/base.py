@@ -28,3 +28,7 @@ class Detector(ABC):
     @abstractmethod
     def detect(self, bgr: np.ndarray) -> Detections:
         """Run on one BGR image (OpenCV layout, H x W x 3 uint8)."""
+
+    @abstractmethod
+    def configure(self, classes: list[str] | None, confidence: float) -> None:
+        """Change which classes are reported and the minimum score (hot reload)."""

@@ -8,8 +8,12 @@ simply overwritten, so a slow detector never builds up a backlog / latency.
 from __future__ import annotations
 
 import logging
+import os
 import threading
 import time
+import urllib.error
+import urllib.parse
+import urllib.request
 
 import av
 import numpy as np
@@ -67,9 +71,31 @@ class LoginGuard:
                 )
 
 
-def is_auth_failure(e: Exception) -> bool:
+def stream_known_to_go2rtc(url: str) -> bool | None:
+    """Ask go2rtc's API whether a stream name exists. None = can't tell (not go2rtc / API down)."""
+    api = os.environ.get("GO2RTC_API", "http://go2rtc:1984").rstrip("/")
+    parsed = urllib.parse.urlparse(url)
+    if parsed.hostname not in (urllib.parse.urlparse(api).hostname, "go2rtc"):
+        return None
+    name = parsed.path.lstrip("/")
+    try:
+        with urllib.request.urlopen(f"{api}/api/streams?src={urllib.parse.quote(name)}", timeout=2) as r:
+            return r.status == 200
+    except urllib.error.HTTPError as he:
+        return False if he.code == 404 else None
+    except Exception:
+        return None
+
+
+def is_auth_failure(e: Exception, url: str | None = None) -> bool:
+    """go2rtc answers 404 both when it cannot log in to the NVR and when the stream is not
+    configured (yet). Only the first may lock the NVR account, so tell them apart."""
     name = type(e).__name__
-    return name in ("HTTPNotFoundError", "HTTPUnauthorizedError", "HTTPForbiddenError")
+    if name not in ("HTTPNotFoundError", "HTTPUnauthorizedError", "HTTPForbiddenError"):
+        return False
+    if url and name == "HTTPNotFoundError" and stream_known_to_go2rtc(url) is False:
+        return False  # stream simply doesn't exist (config not applied yet): not a login problem
+    return True
 
 
 LOGIN_GUARD = LoginGuard()
@@ -114,8 +140,13 @@ class LatestFrameReader:
                 backoff = 1.0  # stream ended cleanly; reconnect quickly
             except Exception as e:  # network errors, auth errors, decoder errors
                 self.last_error = f"{type(e).__name__}: {e}"
-                auth = is_auth_failure(e)
+                auth = is_auth_failure(e, self.url)
                 LOGIN_GUARD.report(auth_failure=auth)
+                if isinstance(e, av.error.HTTPNotFoundError) and not auth:
+                    log.info("[%s] stream not configured in go2rtc yet, retrying", self.camera_id)
+                    if self._stop.wait(2.0):
+                        break
+                    continue
                 if isinstance(e, av.error.InvalidDataError):
                     # go2rtc is still opening its NVR session: not a real failure, retry soon.
                     log.info("[%s] stream not ready yet, retrying", self.camera_id)

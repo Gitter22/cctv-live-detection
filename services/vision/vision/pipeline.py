@@ -32,9 +32,10 @@ class CameraPipeline:
         self.publisher = publisher
         self.reader = LatestFrameReader(cam.id, cam.url)
         self.tracker = ByteTracker(
-            high_threshold=cfg.detector.confidence,  # detector returns down to low_confidence
-            max_lost=int(self.p.detect_fps * 3),  # keep IDs through ~3 s occlusion
+            high_threshold=cam.confidence,  # the shared detector returns down to the lowest threshold
+            max_lost=max(3, int(cam.detect_fps * 3)),  # keep IDs through ~3 s occlusion
         )
+        self._classes = set(cam.classes)
         self.zones = ZoneEngine(
             zones=cam.zones,
             lines=cam.lines,
@@ -42,10 +43,10 @@ class CameraPipeline:
             exit_after_s=self.p.exit_after_s,
             anchor=self.p.anchor,
         )
-        self.motion = MotionGate(self.p.motion_pixel_threshold, self.p.motion_min_area) if self.p.motion_gate else None
+        self.motion = MotionGate(self.p.motion_pixel_threshold, self.p.motion_min_area) if cam.motion_gate else None
         self._last_detect = 0.0
         self._skipped = 0
-        self.interval = 1.0 / self.p.detect_fps
+        self.interval = 1.0 / cam.detect_fps
         self.next_due = 0.0
         self._last_seq = -1
         self.online: bool | None = None  # unknown until first check
@@ -58,6 +59,9 @@ class CameraPipeline:
 
     def start(self) -> None:
         self.reader.start()
+
+    def stop(self) -> None:
+        self.reader.stop()
 
     # ------------------------------------------------------------------ main step
     def step(self, now: float) -> None:
@@ -86,8 +90,13 @@ class CameraPipeline:
         self._frame_age_ms.append((time.time() - frame_ts) * 1000)
         self._detect_times.append(now)
 
+        # The detector is shared by all cameras: keep only this camera's classes and thresholds.
+        keep = np.array(
+            [c in self._classes and s >= self.cam.low_confidence for c, s in zip(dets.class_name, dets.confidence)],
+            dtype=bool,
+        )
         h, w = frame.shape[:2]
-        tracked = self.tracker.update(dets.xyxy, dets.confidence, dets.class_name)
+        tracked = self.tracker.update(dets.xyxy[keep], dets.confidence[keep], dets.class_name[keep])
         scale = np.array([w, h, w, h], dtype=np.float32)
         objects = [
             TrackedObject(t.track_id, t.class_name, t.confidence, np.clip(t.box / scale, 0.0, 1.0))

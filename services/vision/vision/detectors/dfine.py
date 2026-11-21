@@ -51,10 +51,16 @@ class DFineDetector(Detector):
         self.logits_name = "logits" if "logits" in names else next(n for n in names if n != self.boxes_name)
 
         self.size = input_size
-        self.confidence = confidence
+        self.class_names = np.array(COCO_CLASSES, dtype=object)
+        self.configure(classes, confidence)
+
+    def configure(self, classes: list[str] | None, confidence: float) -> None:
+        unknown = set(classes or []) - set(COCO_CLASSES)
+        if unknown:
+            log.warning("ignoring classes this model does not know: %s", sorted(unknown))
         wanted = set(classes or COCO_CLASSES)
         self.class_mask = np.array([c in wanted for c in COCO_CLASSES])
-        self.class_names = np.array(COCO_CLASSES, dtype=object)
+        self.confidence = confidence
 
     def _input_wh(self, w: int, h: int) -> tuple[int, int]:
         """Long side = input_size, short side scaled to match, both rounded to multiples of 32."""

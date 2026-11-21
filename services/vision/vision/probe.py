@@ -48,7 +48,7 @@ def main() -> int:
             except Exception as e:
                 ok = False
                 print(f"FAIL {name:10s} {type(e).__name__}: {e}")
-                if is_auth_failure(e):
+                if is_auth_failure(e, url):
                     print("Stopping: NVR login failed (wrong password or account locked). "
                           "Not trying more streams, to avoid locking the account.")
                     return 1

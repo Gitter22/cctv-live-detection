@@ -23,6 +23,9 @@ class Publisher(ABC):
     @abstractmethod
     def metrics(self, camera_id: str, data: dict) -> None: ...
 
+    def clear_camera(self, camera_id: str) -> None:
+        """Forget retained state of a removed camera."""
+
     def close(self) -> None:
         pass
 
@@ -57,6 +60,11 @@ class MqttPublisher(Publisher):
 
     def metrics(self, camera_id: str, data: dict) -> None:
         self._pub(f"{self.prefix}/metrics/{camera_id}", data, qos=0, retain=True)
+
+    def clear_camera(self, camera_id: str) -> None:
+        # An empty retained message deletes the retained value.
+        self.client.publish(f"{self.prefix}/cameras/{camera_id}/status", b"", qos=1, retain=True)
+        self.client.publish(f"{self.prefix}/metrics/{camera_id}", b"", qos=1, retain=True)
 
     def close(self) -> None:
         self.client.publish(self.service_topic, json.dumps({"online": False}), qos=1, retain=True).wait_for_publish(2)
