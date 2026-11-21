@@ -23,6 +23,8 @@ export function renderVisionYaml(config: EdgeConfig, opts: { go2rtcRtsp: string;
         detect_fps: c.detection.detectFps,
         motion_gate: c.detection.motionGate,
         faces: c.detection.faces && !!c.streams.main,
+        // Cameras on the same NVR/device share one login-lockout guard (credentials never included)
+        login_group: loginGroup(c.streams.sub),
         main_stream: `${c.key}_main`,
         zones: c.zones.map((z) => ({ id: z.key, polygon: z.polygon })),
         lines: c.lines.map((l) => ({ id: l.key, start: l.start, end: l.end })),
@@ -45,4 +47,14 @@ export async function applyVision(config: EdgeConfig, opts: { path: string; go2r
   await rename(tmp, opts.path); // atomic: vision never reads a half-written file
   logger.info({ cameras: config.cameras.filter((c) => c.enabled).map((c) => c.key) }, 'vision config written');
   return true;
+}
+
+/** "host:port" of a stream URL, used to group cameras that log in to the same device. */
+export function loginGroup(url: string): string {
+  try {
+    const u = new URL(url);
+    return `${u.hostname}:${u.port || '554'}`;
+  } catch {
+    return 'default';
+  }
 }

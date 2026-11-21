@@ -98,13 +98,26 @@ def is_auth_failure(e: Exception, url: str | None = None) -> bool:
     return True
 
 
-LOGIN_GUARD = LoginGuard()
+_GUARDS: dict[str, LoginGuard] = {}
+_GUARDS_LOCK = threading.Lock()
+
+
+def guard_for(group: str) -> LoginGuard:
+    """One guard per device (NVR host:port): a broken camera elsewhere can't pause this one."""
+    with _GUARDS_LOCK:
+        if group not in _GUARDS:
+            _GUARDS[group] = LoginGuard()
+        return _GUARDS[group]
+
+
+LOGIN_GUARD = guard_for("default")  # kept for tools/tests
 
 
 class LatestFrameReader:
-    def __init__(self, camera_id: str, url: str):
+    def __init__(self, camera_id: str, url: str, login_group: str = "default"):
         self.camera_id = camera_id
         self.url = url
+        self.guard = guard_for(login_group)
         self._lock = threading.Lock()
         self._frame: np.ndarray | None = None
         self._frame_ts = 0.0  # wall clock time the frame was decoded
@@ -129,7 +142,7 @@ class LatestFrameReader:
     def _run(self) -> None:
         backoff = 1.0
         while not self._stop.is_set():
-            if not LOGIN_GUARD.acquire():
+            if not self.guard.acquire():
                 if self._stop.wait(2.0):
                     break
                 continue
@@ -141,7 +154,7 @@ class LatestFrameReader:
             except Exception as e:  # network errors, auth errors, decoder errors
                 self.last_error = f"{type(e).__name__}: {e}"
                 auth = is_auth_failure(e, self.url)
-                LOGIN_GUARD.report(auth_failure=auth)
+                self.guard.report(auth_failure=auth)
                 if isinstance(e, av.error.HTTPNotFoundError) and not auth:
                     log.info("[%s] stream not configured in go2rtc yet, retrying", self.camera_id)
                     if self._stop.wait(2.0):
@@ -184,7 +197,7 @@ class LatestFrameReader:
                 stream.codec_context.height,
             )
             self.last_error = None
-            LOGIN_GUARD.report(auth_failure=False)
+            self.guard.report(auth_failure=False)
             for frame in container.decode(stream):
                 if self._stop.is_set():
                     return

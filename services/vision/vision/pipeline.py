@@ -30,7 +30,7 @@ class CameraPipeline:
         self.p = cfg.pipeline
         self.detector = detector
         self.publisher = publisher
-        self.reader = LatestFrameReader(cam.id, cam.url)
+        self.reader = LatestFrameReader(cam.id, cam.url, cam.login_group)
         self.tracker = ByteTracker(
             high_threshold=cam.confidence,  # the shared detector returns down to the lowest threshold
             max_lost=max(3, int(cam.detect_fps * 3)),  # keep IDs through ~3 s occlusion

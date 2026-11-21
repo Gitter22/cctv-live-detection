@@ -49,3 +49,11 @@ describe('vision config', () => {
     expect(parse(await readFile(path, 'utf8')).cameras[0].id).toBe('press-3');
   });
 });
+
+describe('login groups', () => {
+  it('group cameras by device host:port without credentials', async () => {
+    const { loginGroup } = await import('../src/vision-config');
+    expect(loginGroup('rtsp://viewer:p%40ss@192.168.1.17:554/cam/realmonitor?channel=1&subtype=1')).toBe('192.168.1.17:554');
+    expect(loginGroup('rtsp://admin:x@10.0.0.9/stream1')).toBe('10.0.0.9:554');
+  });
+});

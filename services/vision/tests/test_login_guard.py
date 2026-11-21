@@ -41,3 +41,20 @@ class LoginGuardTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GuardPerDeviceTest(unittest.TestCase):
+    def test_devices_have_independent_guards(self):
+        from vision.ingest import guard_for
+
+        nvr, other = guard_for("192.168.1.17:554"), guard_for("10.0.0.9:554")
+        self.assertIs(nvr, guard_for("192.168.1.17:554"))
+        self.assertIsNot(nvr, other)
+        with mock.patch("vision.ingest.time.time", return_value=0):
+            # a broken camera on another device...
+            other.suspect = False
+            other.acquire()
+            other.report(auth_failure=True)
+            # ...doesn't block this NVR
+            nvr.suspect = False
+            self.assertTrue(nvr.acquire())
