@@ -17,7 +17,7 @@ Step 1 (done, `1d0a1ca`): monorepo, go2rtc, Mosquitto, Postgres, vision service 
 | --- | --- | --- | --- |
 | [x] | A1 | **Server scaffold.** `apps/server`: TypeScript → CommonJS, Express, zod-validated env, `/api/health`, vitest, Dockerfile, Compose service, root scripts | `npm test -w apps/server` passes; `curl /api/health` returns OK from Docker |
 | [x] | A2 | **Shared package in TypeScript.** `packages/shared`: zod schemas for VisionEvent v1 (matches the JSON Schema), common enums, topic helpers. Built to CJS + `.d.ts` | Server imports it; test validates a real vision event payload |
-| [ ] | A3 | **Database schema.** Prisma schema for all models in the architecture, first migration, `vector` extension, Prisma client in the server | `prisma migrate deploy` works on a fresh DB; schema test inserts and reads a site |
+| [x] | A3 | **Database schema.** Prisma schema for all models in the architecture, first migration, `vector` extension, Prisma client in the server | `prisma migrate deploy` works on a fresh DB; schema test inserts and reads a site |
 | [ ] | A4 | **Secrets crypto.** AES-256-GCM helper with `SECRETS_KEY`, key-version prefix, redaction helper for API output | Unit tests: round trip, tamper detection, wrong key fails |
 | [ ] | A5 | **Auth.** Password hashing (scrypt, no native deps), login/logout/me, httpOnly cookie with JWT, rate limit on login, CSRF protection (SameSite + Origin check) | Tests: login OK/fail, cookie flags, protected route 401 |
 | [ ] | A6 | **Access layer.** Request context with memberships; `requireOrgRole`, site scoping, platform-admin rules (config only, no footage) in one place | Tests: user of org A gets 404 for every org B resource; viewer cannot write |

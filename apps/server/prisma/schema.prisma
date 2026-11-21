@@ -1,0 +1,323 @@
+// Server database. One Postgres DB for all organizations: every tenant-owned row
+// carries organizationId and the API access layer always filters by it.
+// See docs/ARCHITECTURE.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PlatformRole {
+  SUPER_ADMIN
+}
+
+enum OrgRole {
+  VIEWER
+  ADMIN
+  OWNER
+}
+
+enum SourceKind {
+  NVR
+  CAMERA
+  RAW_URL
+}
+
+enum EdgeStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum Severity {
+  info
+  warning
+  danger
+}
+
+enum AlertStatus {
+  OPEN
+  ACKED
+  CLOSED
+}
+
+// ---------------------------------------------------------------- identity
+
+model User {
+  id           String        @id @default(uuid()) @db.Uuid
+  email        String        @unique
+  name         String
+  /// scrypt hash, "scrypt$N$r$p$salt$hash"
+  passwordHash String
+  platformRole PlatformRole?
+  disabled     Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  memberships Membership[]
+
+  @@map("users")
+}
+
+model Organization {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships   Membership[]
+  sites         Site[]
+  supportGrants SupportGrant[]
+
+  @@map("organizations")
+}
+
+model Membership {
+  id             String       @id @default(uuid()) @db.Uuid
+  userId         String       @db.Uuid
+  organizationId String       @db.Uuid
+  role           OrgRole
+  /// Limit to these sites. Empty = all sites of the organization.
+  siteIds        String[]     @db.Uuid
+  createdAt      DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@map("memberships")
+}
+
+// ---------------------------------------------------------------- sites and video
+
+model Site {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  name           String
+  slug           String
+  /// IANA timezone, e.g. "Asia/Kolkata". Rules schedules use it.
+  timezone       String       @default("UTC")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  edges   Edge[]
+  sources Source[]
+  cameras Camera[]
+  rules   Rule[]
+  events  Event[]
+  alerts  Alert[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@map("sites")
+}
+
+/// A box at a site running go2rtc + vision + edge agent. Authenticates with a token.
+model Edge {
+  id             String     @id @default(uuid()) @db.Uuid
+  organizationId String     @db.Uuid
+  siteId         String     @db.Uuid
+  name           String
+  /// sha256 of the edge token. The token itself is shown once at creation.
+  tokenHash      String     @unique
+  status         EdgeStatus @default(ACTIVE)
+  lastSeenAt     DateTime?
+  version        String?
+  /// Last heartbeat payload (camera states, metrics).
+  health         Json?
+  createdAt      DateTime   @default(now())
+  revokedAt      DateTime?
+  site           Site       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId])
+  @@index([organizationId])
+  @@map("edges")
+}
+
+/// How to reach video: an NVR / camera (vendor template) or a raw RTSP URL.
+model Source {
+  id             String     @id @default(uuid()) @db.Uuid
+  organizationId String     @db.Uuid
+  siteId         String     @db.Uuid
+  name           String
+  kind           SourceKind
+  /// dahua | hikvision | generic (URL template for NVR/CAMERA kinds)
+  vendor         String?
+  host           String?
+  rtspPort       Int?
+  username       String?
+  /// AES-256-GCM encrypted. Never returned by the API.
+  passwordEnc    String?
+  /// AES-256-GCM encrypted full RTSP URL (RAW_URL kind). Never returned by the API.
+  rawUrlEnc      String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  site           Site       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  cameras        Camera[]
+
+  @@index([siteId])
+  @@index([organizationId])
+  @@map("sources")
+}
+
+model Camera {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  siteId         String   @db.Uuid
+  sourceId       String?  @db.Uuid
+  /// Stable ID at the edge (go2rtc stream name, vision camera_id), e.g. "entrance-1".
+  key            String
+  label          String
+  /// NVR channel number (vendor template sources)
+  channel        Int?
+  /// Optional encrypted per-camera URL overrides (sub = detection, main = HD / faces)
+  subUrlEnc      String?
+  mainUrlEnc     String?
+  enabled        Boolean  @default(true)
+  tags           String[]
+  /// Generic detection settings: { classes, confidence, lowConfidence, detectFps, ... }
+  detection      Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  site           Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  source         Source?  @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  zones          Zone[]
+  lines          Line[]
+
+  @@unique([siteId, key])
+  @@index([organizationId])
+  @@map("cameras")
+}
+
+model Zone {
+  id        String   @id @default(uuid()) @db.Uuid
+  cameraId  String   @db.Uuid
+  key       String
+  label     String
+  /// [[x, y], ...] normalised 0..1
+  polygon   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  camera    Camera   @relation(fields: [cameraId], references: [id], onDelete: Cascade)
+
+  @@unique([cameraId, key])
+  @@map("zones")
+}
+
+model Line {
+  id        String   @id @default(uuid()) @db.Uuid
+  cameraId  String   @db.Uuid
+  key       String
+  label     String
+  /// [x, y] normalised 0..1
+  start     Json
+  end       Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  camera    Camera   @relation(fields: [cameraId], references: [id], onDelete: Cascade)
+
+  @@unique([cameraId, key])
+  @@map("lines")
+}
+
+// ---------------------------------------------------------------- rules, events, alerts
+
+model Rule {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  siteId         String   @db.Uuid
+  name           String
+  enabled        Boolean  @default(true)
+  /// Versioned rule definition validated by zod in @cctv/shared: { v, scope, when, then, cooldownS }
+  definition     Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  site           Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  alerts         Alert[]
+
+  @@index([siteId])
+  @@index([organizationId])
+  @@map("rules")
+}
+
+model Event {
+  /// Same UUID as the VisionEvent id (makes ingestion idempotent).
+  id             String   @id @db.Uuid
+  organizationId String   @db.Uuid
+  siteId         String   @db.Uuid
+  cameraKey      String
+  type           String
+  ts             DateTime
+  payload        Json
+  /// Key in the snapshot store, e.g. "<siteId>/2026-11-21/<id>.jpg"
+  snapshotKey    String?
+  receivedAt     DateTime @default(now())
+  site           Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  alerts         Alert[]
+
+  @@index([siteId, ts])
+  @@index([organizationId, ts])
+  @@map("events")
+}
+
+model Alert {
+  id             String      @id @default(uuid()) @db.Uuid
+  organizationId String      @db.Uuid
+  siteId         String      @db.Uuid
+  ruleId         String?     @db.Uuid
+  eventId        String?     @db.Uuid
+  cameraKey      String?
+  severity       Severity
+  status         AlertStatus @default(OPEN)
+  title          String
+  ackedById      String?     @db.Uuid
+  ackedAt        DateTime?
+  closedAt       DateTime?
+  notes          Json        @default("[]")
+  createdAt      DateTime    @default(now())
+  site           Site        @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  rule           Rule?       @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  event          Event?      @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([siteId, status])
+  @@map("alerts")
+}
+
+// ---------------------------------------------------------------- governance
+
+/// Owner lets the platform admin see footage/events of this org until expiresAt.
+model SupportGrant {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  grantedById    String       @db.Uuid
+  reason         String
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, expiresAt])
+  @@map("support_grants")
+}
+
+model AuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  actorId        String?  @db.Uuid
+  /// "user" | "edge" | "system"
+  actorType      String
+  organizationId String?  @db.Uuid
+  action         String
+  targetType     String?
+  targetId       String?
+  meta           Json?
+  at             DateTime @default(now())
+
+  @@index([organizationId, at])
+  @@map("audit_logs")
+}

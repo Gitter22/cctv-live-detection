@@ -4,7 +4,9 @@ import { z } from 'zod';
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   SERVER_PORT: z.coerce.number().int().positive().default(4000),
-  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  LOG_LEVEL: z
+    .preprocess((v) => (typeof v === 'string' ? v.toLowerCase() : v), z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']))
+    .default('info'),
   DATABASE_URL: z.string().url(),
   /** Signs session JWTs. At least 32 characters. */
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
