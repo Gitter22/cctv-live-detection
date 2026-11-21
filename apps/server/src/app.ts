@@ -10,6 +10,7 @@ import { healthRouter } from './routes/health';
 import { orgsRouter } from './routes/orgs';
 import { rulesRouter } from './routes/rules';
 import { sitesRouter } from './routes/sites';
+import { streamRouter } from './routes/stream';
 import { sourcesRouter } from './routes/sources';
 
 export function createApp() {
@@ -35,6 +36,7 @@ export function createApp() {
   app.use('/api', edgesRouter);
   app.use('/api', rulesRouter);
   app.use('/api', alertsRouter);
+  app.use('/api', streamRouter);
 
   app.use('/api', (_req, _res, next) => next(notFound('Unknown API route')));
   app.use(errorMiddleware);

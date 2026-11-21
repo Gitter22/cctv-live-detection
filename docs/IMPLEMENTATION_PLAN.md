@@ -49,7 +49,7 @@ Step 1 (done, `1d0a1ca`): monorepo, go2rtc, Mosquitto, Postgres, vision service 
 | [x] | C2 | **Rules engine core.** Pure TypeScript: scope matching, schedules in site timezone, zone occupancy, presence / absence / count / line / offline, cooldowns | Unit tests for each condition, incl. the factory examples |
 | [x] | C3 | **Engine wiring.** Run the engine on ingested events and on a timer (absence, offline); create Alerts | Integration test: event in → alert out |
 | [x] | C4 | **Events and alerts API.** List/filter, alert acknowledge/close/notes; snapshots served via permission check / signed URL | API tests incl. tenancy and footage rules |
-| [ ] | C5 | **Live updates.** Server-Sent Events stream of alerts and camera status per org/site | Test client receives an alert within 1 s |
+| [x] | C5 | **Live updates.** Server-Sent Events stream of alerts and camera status per org/site | Test client receives an alert within 1 s |
 | [ ] | C6 | **Support grants and audit log.** Owner grants time-limited support access; every footage access and config change is audit-logged | Tests: super admin blocked without grant, allowed with one, logged |
 | [ ] | C7 | **Home rules.** Seed rules: person at entrance, person on first floor / last floor at night, camera offline | Walk past a camera → alert row with snapshot |
 | [ ] | **C✓** | **Milestone: push** | |
