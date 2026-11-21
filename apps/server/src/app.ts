@@ -4,6 +4,7 @@ import { authenticate, csrfGuard } from './auth/session';
 import { errorMiddleware, notFound } from './lib/http';
 import { authRouter } from './routes/auth';
 import { camerasRouter } from './routes/cameras';
+import { edgeApiRouter, edgesRouter } from './routes/edges';
 import { healthRouter } from './routes/health';
 import { orgsRouter } from './routes/orgs';
 import { sitesRouter } from './routes/sites';
@@ -15,6 +16,10 @@ export function createApp() {
   app.set('trust proxy', 'loopback');
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
+  // Edge agents: token auth, no cookies, no browser.
+  app.use('/edge/v1', edgeApiRouter);
+  app.use('/edge', (_req, _res, next) => next(notFound('Unknown edge route')));
+
   app.use('/api', csrfGuard, authenticate);
 
   app.use('/api', healthRouter);
@@ -23,6 +28,7 @@ export function createApp() {
   app.use('/api', sitesRouter);
   app.use('/api', sourcesRouter);
   app.use('/api', camerasRouter);
+  app.use('/api', edgesRouter);
 
   app.use('/api', (_req, _res, next) => next(notFound('Unknown API route')));
   app.use(errorMiddleware);
