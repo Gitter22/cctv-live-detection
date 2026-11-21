@@ -46,7 +46,7 @@ Step 1 (done, `1d0a1ca`): monorepo, go2rtc, Mosquitto, Postgres, vision service 
 | | ID | Task | Done when |
 | --- | --- | --- | --- |
 | [x] | C1 | **Rule schema and API.** zod rule schema in shared (scope, condition, schedule, severity, cooldown); CRUD with validation | API tests incl. invalid rules rejected |
-| [ ] | C2 | **Rules engine core.** Pure TypeScript: scope matching, schedules in site timezone, zone occupancy, presence / absence / count / line / offline, cooldowns | Unit tests for each condition, incl. the factory examples |
+| [x] | C2 | **Rules engine core.** Pure TypeScript: scope matching, schedules in site timezone, zone occupancy, presence / absence / count / line / offline, cooldowns | Unit tests for each condition, incl. the factory examples |
 | [ ] | C3 | **Engine wiring.** Run the engine on ingested events and on a timer (absence, offline); create Alerts | Integration test: event in → alert out |
 | [ ] | C4 | **Events and alerts API.** List/filter, alert acknowledge/close/notes; snapshots served via permission check / signed URL | API tests incl. tenancy and footage rules |
 | [ ] | C5 | **Live updates.** Server-Sent Events stream of alerts and camera status per org/site | Test client receives an alert within 1 s |
