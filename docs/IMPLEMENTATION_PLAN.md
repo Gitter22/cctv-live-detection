@@ -58,7 +58,7 @@ Step 1 (done, `1d0a1ca`): monorepo, go2rtc, Mosquitto, Postgres, vision service 
 
 | | ID | Task | Done when |
 | --- | --- | --- | --- |
-| [ ] | D1 | **Web scaffold.** `apps/web` Vite + React + TypeScript, router, API client, login page, Docker (nginx) + Compose, proxy to server | Login works in the browser |
+| [x] | D1 | **Web scaffold.** `apps/web` Vite + React + TypeScript, router, API client, login page, Docker (nginx) + Compose, proxy to server | Login works in the browser |
 | [ ] | D2 | **Shell and dashboard.** Layout, org/site switcher, camera health overview | Shows real camera status |
 | [ ] | D3 | **Admin screens.** Super admin: orgs, edges (token shown once), health. Org: members and roles | Create org + owner from the UI |
 | [ ] | D4 | **Sites, sources, cameras.** Forms incl. vendor template vs raw URL, write-only secrets, tags, detection settings | Add a camera from the UI and it appears at the edge |

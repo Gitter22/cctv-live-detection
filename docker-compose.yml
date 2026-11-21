@@ -91,6 +91,19 @@ services:
       timeout: 3s
       retries: 10
 
+  # Web app (React SPA via nginx, same-origin proxy to the API).
+  web:
+    profiles: [server]
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    restart: unless-stopped
+    ports:
+      - '${WEB_PORT:-5173}:80'
+    depends_on:
+      server:
+        condition: service_healthy
+
   # Edge agent: syncs this site's config from the server, drives go2rtc + vision.
   edge:
     profiles: [edge]
