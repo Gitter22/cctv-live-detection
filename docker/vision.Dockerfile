@@ -25,6 +25,12 @@ ARG DFINE_VARIANT=s
 RUN mkdir -p /models && curl -fsSL --retry 5 -o /models/dfine.onnx \
     "https://huggingface.co/onnx-community/dfine_${DFINE_VARIANT}_coco-ONNX/resolve/main/onnx/model.onnx"
 
+# Faces (opt-in per camera): YuNet (MIT) + SFace (Apache-2.0) from the OpenCV model zoo on Hugging Face.
+RUN curl -fsSL --retry 5 -o /models/yunet.onnx \
+      "https://huggingface.co/opencv/face_detection_yunet/resolve/main/face_detection_yunet_2023mar.onnx" \
+ && curl -fsSL --retry 5 -o /models/sface.onnx \
+      "https://huggingface.co/opencv/face_recognition_sface/resolve/main/face_recognition_sface_2021dec.onnx"
+
 COPY services/vision/vision ./vision
 COPY services/vision/tests ./tests
 COPY services/vision/tools ./tools

@@ -13,7 +13,7 @@ const config = {
       enabled: true,
       tags: [],
       streams: { sub: 'rtsp://u:p@nvr/1', main: null },
-      detection: { classes: ['person'], confidence: 0.5, lowConfidence: 0.25, detectFps: 5, motionGate: true },
+      detection: { classes: ['person'], confidence: 0.5, lowConfidence: 0.25, detectFps: 5, motionGate: true, faces: false },
       zones: [],
       lines: [],
     },

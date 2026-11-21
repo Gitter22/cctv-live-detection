@@ -22,6 +22,8 @@ export function renderVisionYaml(config: EdgeConfig, opts: { go2rtcRtsp: string;
         low_confidence: c.detection.lowConfidence,
         detect_fps: c.detection.detectFps,
         motion_gate: c.detection.motionGate,
+        faces: c.detection.faces && !!c.streams.main,
+        main_stream: `${c.key}_main`,
         zones: c.zones.map((z) => ({ id: z.key, polygon: z.polygon })),
         lines: c.lines.map((l) => ({ id: l.key, start: l.start, end: l.end })),
       })),

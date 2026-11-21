@@ -95,6 +95,7 @@ function CameraForm({ camera, sources, onClose }: { camera: Camera | null; sourc
     confidence: camera?.detection.confidence ?? 0.5,
     detectFps: camera?.detection.detectFps ?? 5,
     motionGate: camera?.detection.motionGate ?? true,
+    faces: camera?.detection.faces ?? false,
   });
   const [error, setError] = useState<string | null>(null);
   const source = sources.find((s) => s.id === form.sourceId);
@@ -111,7 +112,7 @@ function CameraForm({ camera, sources, onClose }: { camera: Camera | null; sourc
         ...(form.mainUrl ? { mainUrl: form.mainUrl } : {}),
         enabled: form.enabled,
         tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
-        detection: { classes: form.classes, confidence: Number(form.confidence), detectFps: Number(form.detectFps), motionGate: form.motionGate },
+        detection: { classes: form.classes, confidence: Number(form.confidence), detectFps: Number(form.detectFps), motionGate: form.motionGate, faces: form.faces },
       };
       return camera ? patch(`${base}/${camera.id}`, body) : post(base, body);
     },
@@ -206,6 +207,9 @@ function CameraForm({ camera, sources, onClose }: { camera: Camera | null; sourc
         </label>
         <label className="check">
           <input type="checkbox" checked={form.motionGate} onChange={(e) => setForm({ ...form, motionGate: e.target.checked })} /> Motion gate (save CPU)
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={form.faces} onChange={(e) => setForm({ ...form, faces: e.target.checked })} /> Recognise faces (uses the HD stream)
         </label>
         <div className="form-actions">
           <ErrorText error={error} />

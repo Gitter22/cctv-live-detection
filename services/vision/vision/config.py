@@ -38,6 +38,9 @@ class CameraCfg:
     low_confidence: float = 0.25
     detect_fps: float = 5.0
     motion_gate: bool = True
+    # Faces (opt-in): go2rtc name of the camera's high-resolution main stream
+    faces: bool = False
+    main_stream: str | None = None
 
     def signature(self) -> dict:
         """Everything that requires restarting this camera's pipeline when it changes."""
@@ -123,6 +126,8 @@ def load(path: str | None = None) -> Config:
                 low_confidence=float(c.get("low_confidence", det.low_confidence)),
                 detect_fps=float(c.get("detect_fps", pipe.detect_fps)),
                 motion_gate=bool(c.get("motion_gate", pipe.motion_gate)),
+                faces=bool(c.get("faces", False)),
+                main_stream=c.get("main_stream") or f"{(c.get('stream') or c['id'])}_main",
             )
         )
 

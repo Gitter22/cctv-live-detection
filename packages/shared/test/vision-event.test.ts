@@ -50,3 +50,15 @@ describe('update bodies', () => {
     expect(UpdateSiteBody.parse({ name: 'x' })).toEqual({ name: 'x' });
   });
 });
+
+describe('face.observed', () => {
+  it('requires a 128-d embedding and the person it belongs to', async () => {
+    const { VisionEvent } = await import('../src');
+    const base = { schema: 'vision.event/v1', id: '7f5bd5f7-52db-4cd5-95c5-b62caabafa11', type: 'face.observed', ts: '2026-11-21T17:35:25.983Z', camera_id: 'entrance-1' };
+    const object = { class: 'person', track_id: 4, confidence: 0.9, bbox: [0.1, 0.1, 0.3, 0.9] };
+    const face = { embedding: Array(128).fill(0.01), score: 0.9, bbox: [0.15, 0.12, 0.2, 0.2] };
+    expect(VisionEvent.safeParse({ ...base, object, face }).success).toBe(true);
+    expect(VisionEvent.safeParse({ ...base, object }).success).toBe(false);
+    expect(VisionEvent.safeParse({ ...base, object, face: { ...face, embedding: [1, 2] } }).success).toBe(false);
+  });
+});

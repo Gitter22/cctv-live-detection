@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 export const VISION_EVENT_SCHEMA = 'vision.event/v1' as const;
 
-export const VisionEventType = z.enum(['zone.enter', 'zone.exit', 'line.cross', 'camera.status']);
+export const VisionEventType = z.enum(['zone.enter', 'zone.exit', 'line.cross', 'camera.status', 'face.observed']);
 export type VisionEventType = z.infer<typeof VisionEventType>;
 
 const unit = z.number().min(0).max(1);
@@ -23,6 +23,17 @@ export const VisionObject = z
   })
   .strict();
 export type VisionObject = z.infer<typeof VisionObject>;
+
+export const VisionFace = z
+  .object({
+    /** SFace feature (128 floats, L2-normalised). Identity is decided by the server, never at the edge. */
+    embedding: z.array(z.number()).length(128),
+    score: unit,
+    bbox: z.tuple([unit, unit, unit, unit]),
+    size_px: z.number().int().optional(),
+  })
+  .strict();
+export type VisionFace = z.infer<typeof VisionFace>;
 
 export const VisionEvent = z
   .object({
@@ -41,10 +52,12 @@ export const VisionEvent = z
       .strict()
       .nullish(),
     frame: z.object({ width: z.number().int(), height: z.number().int() }).partial().strict().nullish(),
+    face: VisionFace.nullish(),
   })
   .strict()
   .superRefine((e, ctx) => {
-    const needsObject = e.type === 'zone.enter' || e.type === 'zone.exit' || e.type === 'line.cross';
+    const needsObject = e.type === 'zone.enter' || e.type === 'zone.exit' || e.type === 'line.cross' || e.type === 'face.observed';
+    if (e.type === 'face.observed' && !e.face) ctx.addIssue({ code: 'custom', path: ['face'], message: 'face.observed needs face' });
     if (needsObject && !e.object) ctx.addIssue({ code: 'custom', path: ['object'], message: `${e.type} needs object` });
     if ((e.type === 'zone.enter' || e.type === 'zone.exit') && !e.zone_id)
       ctx.addIssue({ code: 'custom', path: ['zone_id'], message: `${e.type} needs zone_id` });

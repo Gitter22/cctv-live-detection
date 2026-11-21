@@ -11,7 +11,7 @@ const cam = (key: string, sub: string, main: string | null = null, enabled = tru
   enabled,
   tags: [],
   streams: { sub, main },
-  detection: { classes: ['person'], confidence: 0.5, lowConfidence: 0.25, detectFps: 5, motionGate: true },
+  detection: { classes: ['person'], confidence: 0.5, lowConfidence: 0.25, detectFps: 5, motionGate: true, faces: false },
   zones: [],
   lines: [],
 });

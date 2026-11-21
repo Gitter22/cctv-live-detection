@@ -4,63 +4,203 @@
   "title": "VisionEvent v1",
   "description": "Generic event published by services/vision. Contains NO business rules: it only says what was seen, where and when. Rules (apps/server) decide what is an alert.",
   "type": "object",
-  "required": ["schema", "id", "type", "ts", "camera_id"],
+  "required": [
+    "schema",
+    "id",
+    "type",
+    "ts",
+    "camera_id"
+  ],
   "additionalProperties": false,
   "properties": {
-    "schema": { "const": "vision.event/v1" },
-    "id": { "type": "string", "description": "UUID of this event" },
-    "type": {
-      "enum": ["zone.enter", "zone.exit", "line.cross", "camera.status"],
-      "description": "zone.enter: a tracked object has been inside a zone for confirm_frames frames. zone.exit: it left (or disappeared). line.cross: crossed a configured line. camera.status: stream went online/offline."
+    "schema": {
+      "const": "vision.event/v1"
     },
-    "ts": { "type": "string", "format": "date-time", "description": "UTC time of the frame (ISO 8601)" },
-    "camera_id": { "type": "string" },
-    "zone_id": { "type": ["string", "null"] },
-    "line_id": { "type": ["string", "null"] },
-    "direction": { "enum": ["in", "out", null], "description": "line.cross only" },
+    "id": {
+      "type": "string",
+      "description": "UUID of this event"
+    },
+    "type": {
+      "enum": [
+        "zone.enter",
+        "zone.exit",
+        "line.cross",
+        "camera.status",
+        "face.observed"
+      ],
+      "description": "zone.enter: a tracked object has been inside a zone for confirm_frames frames. zone.exit: it left (or disappeared). line.cross: crossed a configured line. camera.status: stream went online/offline. face.observed: a face was seen on a tracked person (embedding only; identity is decided by the server)."
+    },
+    "ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC time of the frame (ISO 8601)"
+    },
+    "camera_id": {
+      "type": "string"
+    },
+    "zone_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "line_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "direction": {
+      "enum": [
+        "in",
+        "out",
+        null
+      ],
+      "description": "line.cross only"
+    },
     "object": {
-      "type": ["object", "null"],
-      "required": ["class", "track_id", "confidence", "bbox"],
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "class",
+        "track_id",
+        "confidence",
+        "bbox"
+      ],
       "additionalProperties": false,
       "properties": {
-        "class": { "type": "string", "description": "e.g. person, car, dog (COCO names)" },
-        "track_id": { "type": "integer", "description": "Stable per camera while the object is tracked" },
-        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "class": {
+          "type": "string",
+          "description": "e.g. person, car, dog (COCO names)"
+        },
+        "track_id": {
+          "type": "integer",
+          "description": "Stable per camera while the object is tracked"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
         "bbox": {
           "type": "array",
-          "items": { "type": "number", "minimum": 0, "maximum": 1 },
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
           "minItems": 4,
           "maxItems": 4,
           "description": "[x1, y1, x2, y2] normalised to 0..1 of the frame"
         },
-        "dwell_s": { "type": "number", "description": "Seconds inside the zone so far" }
+        "dwell_s": {
+          "type": "number",
+          "description": "Seconds inside the zone so far"
+        }
       }
     },
     "status": {
-      "type": ["object", "null"],
-      "required": ["online"],
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "online"
+      ],
       "additionalProperties": false,
       "properties": {
-        "online": { "type": "boolean" },
-        "reason": { "type": ["string", "null"] }
+        "online": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     },
     "snapshot": {
-      "type": ["object", "null"],
-      "required": ["path"],
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "path"
+      ],
       "additionalProperties": false,
       "properties": {
-        "path": { "type": "string", "description": "Relative to the snapshot store root, e.g. cam1/2026-11-21/<id>.jpg" },
-        "width": { "type": "integer" },
-        "height": { "type": "integer" }
+        "path": {
+          "type": "string",
+          "description": "Relative to the snapshot store root, e.g. cam1/2026-11-21/<id>.jpg"
+        },
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        }
       }
     },
     "frame": {
-      "type": ["object", "null"],
+      "type": [
+        "object",
+        "null"
+      ],
       "additionalProperties": false,
       "properties": {
-        "width": { "type": "integer" },
-        "height": { "type": "integer" }
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        }
+      }
+    },
+    "face": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "embedding",
+        "score",
+        "bbox"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "embedding": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 128,
+          "maxItems": 128,
+          "description": "SFace feature, L2-normalised"
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Face detection confidence"
+        },
+        "bbox": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "minItems": 4,
+          "maxItems": 4,
+          "description": "Face box [x1,y1,x2,y2] normalised to the frame"
+        },
+        "size_px": {
+          "type": "integer",
+          "description": "Face height in pixels on the analysed frame (quality hint)"
+        }
       }
     }
   }

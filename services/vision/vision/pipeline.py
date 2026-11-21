@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 
 
 class CameraPipeline:
-    def __init__(self, cam: CameraCfg, cfg: Config, detector: Detector, publisher: Publisher):
+    def __init__(self, cam: CameraCfg, cfg: Config, detector: Detector, publisher: Publisher, faces=None):
         self.cam = cam
         self.cfg = cfg
         self.p = cfg.pipeline
@@ -36,6 +36,8 @@ class CameraPipeline:
             max_lost=max(3, int(cam.detect_fps * 3)),  # keep IDs through ~3 s occlusion
         )
         self._classes = set(cam.classes)
+        self.faces = faces if cam.faces else None  # shared FaceWorker, only for opted-in cameras
+        self.objects: list[TrackedObject] = []  # latest tracked objects (for face assignment)
         self.zones = ZoneEngine(
             zones=cam.zones,
             lines=cam.lines,
@@ -56,6 +58,38 @@ class CameraPipeline:
         self._frame_age_ms: deque[float] = deque(maxlen=100)
         self._detect_times: deque[float] = deque(maxlen=100)
         self._decoded_at_heartbeat = (0, time.time())
+
+    def persons(self) -> list[tuple[int, tuple[float, float, float, float]]]:
+        return [(o.track_id, tuple(float(v) for v in o.bbox)) for o in self.objects if o.class_name == "person"]
+
+    def emit_face(self, zone_id: str | None, track_id: int, face, frame: np.ndarray) -> None:
+        """Publish face.observed for a tracked person (identity is decided by the server)."""
+        obj = next((o for o in self.objects if o.track_id == track_id), None)
+        if obj is None:
+            return
+        now = time.time()
+        h, w = frame.shape[:2]
+        ev = make_event(
+            "face.observed",
+            self.cam.id,
+            now,
+            zone_id=zone_id,
+            object=object_payload(obj.class_name, obj.track_id, obj.confidence, obj.bbox),
+            face={
+                "embedding": [round(float(v), 5) for v in face.embedding],
+                "score": round(min(1.0, max(0.0, face.score)), 3),
+                "bbox": [round(float(v), 4) for v in face.bbox],
+                "size_px": int(face.size_px),
+            },
+            frame={"width": w, "height": h},
+        )
+        rel = f"{self.cam.id}/{ev['ts'][:10]}/{ev['id']}.jpg"
+        path = os.path.join(self.cfg.snapshot_dir, rel)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        cv2.imwrite(path, face.crop, [cv2.IMWRITE_JPEG_QUALITY, 90])
+        ev["snapshot"] = {"path": rel, "width": int(face.crop.shape[1]), "height": int(face.crop.shape[0])}
+        self.publisher.event(ev)
+        log.info("[%s] face.observed person#%d (face %dpx, score %.2f)", self.cam.id, track_id, face.size_px, face.score)
 
     def start(self) -> None:
         self.reader.start()
@@ -102,8 +136,13 @@ class CameraPipeline:
             TrackedObject(t.track_id, t.class_name, t.confidence, np.clip(t.box / scale, 0.0, 1.0))
             for t in tracked
         ]
+        self.objects = objects
         for tr in self.zones.update(objects, now):
             self._emit(tr, frame, frame_ts)
+            if self.faces and tr.type == "zone.enter" and tr.obj.class_name == "person":
+                self.faces.request(self.cam.id, self.cam.main_stream, tr.zone_id)
+        if self.faces:
+            self.faces.forget_tracks(self.cam.id, {o.track_id for o in objects})
 
     def heartbeat(self, now: float) -> None:
         if now - self._last_heartbeat < self.p.heartbeat_s:

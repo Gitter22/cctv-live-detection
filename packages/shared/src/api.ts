@@ -123,6 +123,8 @@ const DetectionFields = {
   detectFps: z.number().min(0.2).max(15),
   /** Skip the detector on still frames */
   motionGate: z.boolean(),
+  /** Look for faces on persons (main stream) and publish face.observed. Off by default (privacy). */
+  faces: z.boolean(),
 };
 
 export const DETECTION_DEFAULTS = {
@@ -131,6 +133,7 @@ export const DETECTION_DEFAULTS = {
   lowConfidence: 0.25,
   detectFps: 5,
   motionGate: true,
+  faces: false,
 };
 
 /** Complete settings (stored values merged over DETECTION_DEFAULTS). */

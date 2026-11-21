@@ -52,7 +52,7 @@ class RuntimeTest(unittest.TestCase):
         self.addCleanup(patcher.stop)
         self.started = []
 
-        def make(cam, cfg, det, pub):
+        def make(cam, cfg, det, pub, faces=None):
             m = mock.MagicMock()
             m.cam = cam
             self.started.append(cam.id)

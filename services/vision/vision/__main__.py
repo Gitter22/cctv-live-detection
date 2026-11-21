@@ -19,6 +19,7 @@ from . import config as config_mod
 from .config import Config
 from .detectors import Detector
 from .detectors import create as create_detector
+from .faces import FaceAnalyzer, FaceWorker
 from .pipeline import CameraPipeline
 from .publisher import MqttPublisher, Publisher
 
@@ -30,11 +31,22 @@ CONFIG_CHECK_S = 2.0
 class Runtime:
     """The set of running camera pipelines, reconciled against a Config."""
 
-    def __init__(self, detector: Detector, publisher: Publisher):
+    def __init__(self, detector: Detector, publisher: Publisher, faces: FaceWorker | None = None):
         self.detector = detector
         self.publisher = publisher
+        self.faces = faces
         self.pipelines: dict[str, CameraPipeline] = {}
         self.cfg: Config | None = None
+
+    # FaceWorker callbacks
+    def persons_of(self, camera_id: str):
+        p = self.pipelines.get(camera_id)
+        return p.persons() if p else []
+
+    def emit_face(self, camera_id: str, zone_id, track_id: int, face, frame) -> None:
+        p = self.pipelines.get(camera_id)
+        if p:
+            p.emit_face(zone_id, track_id, face, frame)
 
     def apply(self, cfg: Config) -> None:
         # Global pipeline/snapshot settings changed -> every camera restarts.
@@ -55,7 +67,7 @@ class Runtime:
         self.detector.configure(cfg.detector_classes(), cfg.detector_min_confidence())
         for cam_id, cam in wanted.items():
             if cam_id not in self.pipelines:
-                p = CameraPipeline(cam, cfg, self.detector, self.publisher)
+                p = CameraPipeline(cam, cfg, self.detector, self.publisher, self.faces)
                 p.start()
                 self.pipelines[cam_id] = p
         self.cfg = cfg
@@ -98,6 +110,15 @@ def main() -> None:
     )
     publisher = MqttPublisher(cfg.mqtt.host, cfg.mqtt.port, cfg.mqtt.prefix)
     runtime = Runtime(detector, publisher)
+    # Face worker (models load lazily, on the first person at an opted-in camera)
+    faces = FaceWorker(
+        analyzer_factory=lambda: FaceAnalyzer(),
+        go2rtc_api=os.environ.get("GO2RTC_API", "http://go2rtc:1984"),
+        persons_of=runtime.persons_of,
+        emit=runtime.emit_face,
+    )
+    faces.start()
+    runtime.faces = faces
     runtime.apply(cfg)
     log.info("vision started: detector=%s", d.type)
 
@@ -140,6 +161,7 @@ def main() -> None:
 
     log.info("shutting down")
     runtime.stop()
+    faces.stop()
     publisher.close()
 
 

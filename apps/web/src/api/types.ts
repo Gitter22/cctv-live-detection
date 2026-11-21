@@ -76,7 +76,7 @@ export interface Camera {
   tags: string[];
   subUrlSet: boolean;
   mainUrlSet: boolean;
-  detection: { classes: string[]; confidence: number; lowConfidence: number; detectFps: number; motionGate: boolean };
+  detection: { classes: string[]; confidence: number; lowConfidence: number; detectFps: number; motionGate: boolean; faces: boolean };
   zones: Zone[];
   lines: Line[];
   status?: CameraStatus | null;
