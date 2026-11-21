@@ -22,7 +22,7 @@ Step 1 (done, `1d0a1ca`): monorepo, go2rtc, Mosquitto, Postgres, vision service 
 | [x] | A5 | **Auth.** Password hashing (scrypt, no native deps), login/logout/me, httpOnly cookie with JWT, rate limit on login, CSRF protection (SameSite + Origin check) | Tests: login OK/fail, cookie flags, protected route 401 |
 | [x] | A6 | **Access layer.** Request context with memberships; `requireOrgRole`, site scoping, platform-admin rules (config only, no footage) in one place | Tests: user of org A gets 404 for every org B resource; viewer cannot write |
 | [x] | A7 | **Organizations and members API.** Super admin creates orgs + first owner; owner/admin invite and manage members, roles, site limits | API tests for each role |
-| [ ] | A8 | **Sites API.** CRUD with timezone validation | API tests |
+| [x] | A8 | **Sites API.** CRUD with timezone validation | API tests |
 | [ ] | A9 | **Sources API.** NVR/camera (vendor template) and raw URL kinds; secrets write-only (never returned) | Tests: password never appears in any response; URL built from template |
 | [ ] | A10 | **Cameras, zones and lines API.** Camera key, tags, channel, stream overrides, detection settings; zones/lines with normalised coordinates | API tests incl. validation of polygons |
 | [ ] | A11 | **Edges API.** Register edge (token shown once, stored hashed), revoke; edge auth middleware; `GET /edge/v1/config` returns resolved stream URLs + zones + detection settings for its site only | Tests: wrong/revoked token 401; edge of site X cannot read site Y |

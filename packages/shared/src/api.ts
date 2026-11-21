@@ -38,3 +38,26 @@ export const UpdateMemberBody = z
   .object({ role: OrgRole.optional(), siteIds: z.array(Uuid).optional() })
   .refine((b) => b.role !== undefined || b.siteIds !== undefined, 'nothing to update');
 export type UpdateMemberBody = z.infer<typeof UpdateMemberBody>;
+
+// ---------------------------------------------------------------- sites
+
+export const Timezone = z.string().refine((tz) => {
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}, 'unknown IANA timezone, e.g. Asia/Kolkata');
+
+const SiteFields = { name: Name, slug: Slug, timezone: Timezone };
+
+export const CreateSiteBody = z.object({ ...SiteFields, timezone: Timezone.default('UTC') });
+export type CreateSiteBody = z.infer<typeof CreateSiteBody>;
+
+// Built from the fields WITHOUT defaults: a partial update must never inject default values.
+export const UpdateSiteBody = z
+  .object(SiteFields)
+  .partial()
+  .refine((b) => Object.keys(b).length > 0, 'nothing to update');
+export type UpdateSiteBody = z.infer<typeof UpdateSiteBody>;

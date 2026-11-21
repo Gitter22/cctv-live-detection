@@ -43,3 +43,10 @@ describe('VisionEvent', () => {
     expect(Object.keys(json.properties).sort()).toEqual(Object.keys(VisionEvent.shape).sort());
   });
 });
+
+describe('update bodies', () => {
+  it('never inject defaults into partial updates', async () => {
+    const { UpdateSiteBody } = await import('../src');
+    expect(UpdateSiteBody.parse({ name: 'x' })).toEqual({ name: 'x' });
+  });
+});
