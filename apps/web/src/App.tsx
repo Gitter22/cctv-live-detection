@@ -2,6 +2,7 @@ import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router';
 import { useAuth } from './auth/auth';
 import { OrgIndexRedirect, OrgLayout } from './components/Layout';
 import { AdminPage } from './pages/Admin';
+import { CamerasPage } from './pages/Cameras';
 import { DashboardPage } from './pages/Dashboard';
 import { LoginPage } from './pages/Login';
 import { SettingsPage } from './pages/Settings';
@@ -27,7 +28,7 @@ export function App() {
         <Route path="/o/:orgId" element={<OrgLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="alerts" element={<Soon what="Alerts" />} />
-          <Route path="cameras" element={<Soon what="Cameras" />} />
+          <Route path="cameras" element={<CamerasPage />} />
           <Route path="cameras/:cameraId" element={<Soon what="Camera" />} />
           <Route path="rules" element={<Soon what="Rules" />} />
           <Route path="settings" element={<SettingsPage />} />
