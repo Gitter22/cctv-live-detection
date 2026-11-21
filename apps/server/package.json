@@ -16,7 +16,9 @@
     "db:generate": "prisma generate",
     "db:migrate": "dotenv -e ../../.env -- prisma migrate deploy",
     "db:migrate:dev": "dotenv -e ../../.env -- prisma migrate dev",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "seed": "dotenv -e ../../.env -- tsx src/scripts/seed.ts",
+    "import:home": "dotenv -e ../../.env -- tsx src/scripts/import-home.ts"
   },
   "dependencies": {
     "@cctv/shared": "^0.1.0",
@@ -25,8 +27,8 @@
     "express": "^5.3.0",
     "jsonwebtoken": "^9.0.3",
     "pino": "^10.4.0",
-    "zod": "^4.6.7",
-    "prisma": "^6.19.3"
+    "prisma": "^6.19.3",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
@@ -38,6 +40,7 @@
     "supertest": "^7.3.2",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.7"
+    "vitest": "^3.2.7",
+    "yaml": "^2.9.1"
   }
 }
