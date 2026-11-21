@@ -1,6 +1,7 @@
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import { authenticate, csrfGuard } from './auth/session';
+import { bus } from './lib/bus';
 import { errorMiddleware, notFound } from './lib/http';
 import { alertsRouter } from './routes/alerts';
 import { authRouter } from './routes/auth';
@@ -28,6 +29,17 @@ export function createApp() {
   app.use(cookieParser());
 
   app.use('/api', csrfGuard, authenticate);
+
+  // Successful changes to what an edge runs (cameras, zones, lines, sources, the site itself)
+  // are pushed to that site's edge right away over the control channel.
+  app.use('/api/orgs/:orgId/sites/:siteId', (req, res, next) => {
+    if (req.method !== 'GET' && /^\/(cameras|sources)?(\/|$)/.test(req.path)) {
+      res.on('finish', () => {
+        if (res.statusCode < 400) bus.emit('site.config.changed', String(req.params.siteId));
+      });
+    }
+    next();
+  });
 
   app.use('/api', healthRouter);
   app.use('/api', authRouter);

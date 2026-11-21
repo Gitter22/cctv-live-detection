@@ -1,6 +1,7 @@
 import type { EdgeConfig } from '@cctv/shared';
 import { ConfigSync } from './config-sync';
 import { join } from 'node:path';
+import { ControlChannel } from './control';
 import { loadEnv } from './env';
 import { Forwarder, connectMqtt, type SpooledEvent } from './forwarder';
 import { applyGo2rtc } from './go2rtc';
@@ -33,6 +34,10 @@ async function main() {
   });
   await sync.start();
 
+  // Instant config pushes (and live-view signalling) over an outbound WebSocket.
+  const control = new ControlChannel(env.SERVER_URL, env.EDGE_TOKEN, () => void sync.pollOnce());
+  control.start();
+
   // Vision events -> disk spool -> server
   const spool = new Spool<SpooledEvent>(join(env.STATE_DIR, 'spool'));
   await spool.init();
@@ -60,6 +65,7 @@ async function main() {
   const stop = () => {
     logger.info('edge stopping');
     sync.stop();
+    control.stop();
     clearInterval(drainTimer);
     clearInterval(heartbeatTimer);
     clearInterval(thumbTimer);

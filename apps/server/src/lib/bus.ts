@@ -11,6 +11,8 @@ export interface BusEvents {
   'rules.changed': [string];
   'alert.created': [Alert];
   'alert.updated': [Alert];
+  /** Something an edge receives in its config changed for this site (siteId). */
+  'site.config.changed': [string];
 }
 
 class Bus extends EventEmitter<BusEvents> {}
