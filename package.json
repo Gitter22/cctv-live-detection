@@ -6,7 +6,9 @@
     "node": ">=24"
   },
   "workspaces": [
-    "apps/*",
+    "apps/server",
+    "apps/edge",
+    "apps/web",
     "packages/*"
   ],
   "scripts": {
