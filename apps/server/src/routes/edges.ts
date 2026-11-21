@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { loadSite, requireCap } from '../access/access';
 import { edgeAuth, newEdgeToken } from '../edge/edge-auth';
+import { healthRouter } from '../edge/health';
 import { ingestRouter } from '../edge/ingest';
 import { buildSiteConfig, configEtag } from '../edge/site-config';
 import { audit } from '../lib/audit';
@@ -66,6 +67,7 @@ edgesRouter.post(`${base}/:edgeId/revoke`, async (req, res) => {
 export const edgeApiRouter = Router();
 edgeApiRouter.use(edgeAuth);
 edgeApiRouter.use(ingestRouter);
+edgeApiRouter.use(healthRouter);
 
 /** Site configuration for the calling edge. Supports If-None-Match (304 when unchanged). */
 edgeApiRouter.get('/config', async (req, res) => {

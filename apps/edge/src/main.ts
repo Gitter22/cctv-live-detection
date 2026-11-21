@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { loadEnv } from './env';
 import { Forwarder, connectMqtt, type SpooledEvent } from './forwarder';
 import { applyGo2rtc } from './go2rtc';
+import { HealthCollector, sendHeartbeat, uploadThumbnails } from './health';
 import { Spool } from './spool';
 import { applyVision } from './vision-config';
 import { logger } from './logger';
@@ -36,13 +37,33 @@ async function main() {
   const spool = new Spool<SpooledEvent>(join(env.STATE_DIR, 'spool'));
   await spool.init();
   const forwarder = new Forwarder({ serverUrl: env.SERVER_URL, token: env.EDGE_TOKEN, spool, snapshotDir: env.SNAPSHOT_DIR });
-  const mqttClient = connectMqtt(env.MQTT_URL, env.MQTT_TOPIC_PREFIX, forwarder);
+  const health = new HealthCollector();
+  const mqttClient = connectMqtt(env.MQTT_URL, env.MQTT_TOPIC_PREFIX, {
+    onEvent: (p) => void forwarder.accept(p).catch((err) => logger.error({ err }, 'spooling event failed')),
+    onCameraStatus: (k, p) => health.onCameraStatus(k, p),
+    onMetrics: (k, p) => health.onMetrics(k, p),
+    onVisionService: (p) => health.onVisionService(p),
+  });
   const drainTimer = setInterval(() => void forwarder.drain(), 5000);
+
+  // Health every 30 s; thumbnails 1 min after start, then every THUMBNAIL_INTERVAL_S.
+  const enabledKeys = () => (sync.current?.cameras ?? []).filter((c) => c.enabled).map((c) => c.key);
+  const heartbeatTimer = setInterval(async () => {
+    const spoolSize = (await spool.list()).length;
+    await sendHeartbeat(env.SERVER_URL, env.EDGE_TOKEN, health.snapshot(enabledKeys(), spoolSize));
+  }, 30_000);
+  const thumbs = () =>
+    uploadThumbnails({ serverUrl: env.SERVER_URL, token: env.EDGE_TOKEN, go2rtcApi: env.GO2RTC_API, cameraKeys: enabledKeys() });
+  const firstThumbs = setTimeout(thumbs, 60_000);
+  const thumbTimer = setInterval(thumbs, env.THUMBNAIL_INTERVAL_S * 1000);
 
   const stop = () => {
     logger.info('edge stopping');
     sync.stop();
     clearInterval(drainTimer);
+    clearInterval(heartbeatTimer);
+    clearInterval(thumbTimer);
+    clearTimeout(firstThumbs);
     mqttClient.end(false, {}, () => process.exit(0));
     setTimeout(() => process.exit(0), 3000).unref();
   };

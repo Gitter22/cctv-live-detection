@@ -111,17 +111,28 @@ export class Forwarder {
   }
 }
 
-/** Subscribe to vision events on the local broker and feed the forwarder. */
-export function connectMqtt(url: string, prefix: string, forwarder: Forwarder): MqttClient {
+export interface MqttHandlers {
+  onEvent(payload: Buffer): void;
+  onCameraStatus(cameraKey: string, payload: Buffer): void;
+  onMetrics(cameraKey: string, payload: Buffer): void;
+  onVisionService(payload: Buffer): void;
+}
+
+/** Subscribe to vision's topics on the local broker. */
+export function connectMqtt(url: string, prefix: string, h: MqttHandlers): MqttClient {
   const client = mqtt.connect(url, { clientId: `edge-${process.pid}`, reconnectPeriod: 2000, clean: false });
-  const topic = `${prefix}/events/+/+`;
+  const topics = [`${prefix}/events/+/+`, `${prefix}/cameras/+/status`, `${prefix}/metrics/+`, `${prefix}/service/vision`];
   client.on('connect', () => {
-    logger.info({ topic }, 'mqtt connected');
-    client.subscribe(topic, { qos: 1 });
+    logger.info({ topics }, 'mqtt connected');
+    client.subscribe(topics, { qos: 1 });
   });
   client.on('error', (err) => logger.warn({ err: err.message }, 'mqtt error'));
-  client.on('message', (_t, payload) => {
-    forwarder.accept(payload).catch((err) => logger.error({ err }, 'spooling event failed'));
+  client.on('message', (topic, payload) => {
+    const rest = topic.slice(prefix.length + 1).split('/');
+    if (rest[0] === 'events') h.onEvent(payload);
+    else if (rest[0] === 'cameras' && rest[2] === 'status' && rest[1]) h.onCameraStatus(rest[1], payload);
+    else if (rest[0] === 'metrics' && rest[1]) h.onMetrics(rest[1], payload);
+    else if (rest[0] === 'service' && rest[1] === 'vision') h.onVisionService(payload);
   });
   return client;
 }

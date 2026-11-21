@@ -19,6 +19,8 @@ const EnvSchema = z.object({
   MQTT_TOPIC_PREFIX: z.string().default('cctv/v1'),
   /** Snapshots written by vision (shared volume). */
   SNAPSHOT_DIR: z.string().default('/data/snapshots'),
+  /** How often to upload a still per camera (zone editor). */
+  THUMBNAIL_INTERVAL_S: z.coerce.number().min(60).default(600),
   LOG_LEVEL: z
     .preprocess((v) => (typeof v === 'string' ? v.toLowerCase() : v), z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']))
     .default('info'),

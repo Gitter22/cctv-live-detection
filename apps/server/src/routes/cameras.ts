@@ -11,9 +11,11 @@ import {
 import type { Camera, Line, Prisma, Source, Zone } from '@prisma/client';
 import { Router } from 'express';
 import { type OrgAccess, loadSite, requireCap } from '../access/access';
+import { siteCameraStatus, thumbnailKey } from '../edge/health';
 import { audit } from '../lib/audit';
 import { db } from '../lib/db';
 import { badRequest, conflict, notFound, param } from '../lib/http';
+import { getObject } from '../lib/store';
 import { vendorPath } from '../lib/rtsp';
 import { encryptSecret, redactSecrets } from '../lib/secrets';
 import { orgCtx } from './orgs';
@@ -58,8 +60,11 @@ camerasRouter.get(base, async (req, res) => {
   const { access } = await orgCtx(req);
   requireCap(access, 'config.read');
   const site = await loadSite(access, param(req, 'siteId'));
-  const cameras = await db.camera.findMany({ where: { siteId: site.id }, include, orderBy: { key: 'asc' } });
-  res.json({ cameras: cameras.map(cameraView) });
+  const [cameras, status] = await Promise.all([
+    db.camera.findMany({ where: { siteId: site.id }, include, orderBy: { key: 'asc' } }),
+    siteCameraStatus(site.id),
+  ]);
+  res.json({ cameras: cameras.map((c) => ({ ...cameraView(c), status: status[c.key] ?? null })) });
 });
 
 camerasRouter.post(base, async (req, res) => {
@@ -106,6 +111,18 @@ camerasRouter.get(`${base}/:cameraId`, async (req, res) => {
   const { access } = await orgCtx(req);
   requireCap(access, 'config.read');
   res.json({ camera: cameraView(await loadCamera(access, param(req, 'siteId'), param(req, 'cameraId'))) });
+});
+
+/** Latest still image of the camera (footage: needs footage.read). */
+camerasRouter.get(`${base}/:cameraId/thumbnail`, async (req, res) => {
+  const { access } = await orgCtx(req);
+  requireCap(access, 'footage.read');
+  const cam = await loadCamera(access, param(req, 'siteId'), param(req, 'cameraId'));
+  const jpeg = await getObject(thumbnailKey(cam.siteId, cam.key));
+  if (!jpeg) throw notFound('No thumbnail yet');
+  res.setHeader('Content-Type', 'image/jpeg');
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.send(jpeg);
 });
 
 camerasRouter.patch(`${base}/:cameraId`, async (req, res) => {
