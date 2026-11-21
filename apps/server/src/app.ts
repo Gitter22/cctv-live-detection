@@ -7,6 +7,7 @@ import { camerasRouter } from './routes/cameras';
 import { edgeApiRouter, edgesRouter } from './routes/edges';
 import { healthRouter } from './routes/health';
 import { orgsRouter } from './routes/orgs';
+import { rulesRouter } from './routes/rules';
 import { sitesRouter } from './routes/sites';
 import { sourcesRouter } from './routes/sources';
 
@@ -31,6 +32,7 @@ export function createApp() {
   app.use('/api', sourcesRouter);
   app.use('/api', camerasRouter);
   app.use('/api', edgesRouter);
+  app.use('/api', rulesRouter);
 
   app.use('/api', (_req, _res, next) => next(notFound('Unknown API route')));
   app.use(errorMiddleware);

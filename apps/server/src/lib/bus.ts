@@ -7,6 +7,8 @@ import type { Event } from '@prisma/client';
  */
 export interface BusEvents {
   'event.ingested': [Event];
+  /** A site's rules were created/updated/deleted (siteId). */
+  'rules.changed': [string];
 }
 
 class Bus extends EventEmitter<BusEvents> {}
