@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { get } from './client';
-import type { Alert, Camera, Edge, Member, OrgDetail, OrgSummary, Rule, Site, Source } from './types';
+import type { Alert, Camera, Edge, Member, OrgDetail, OrgSummary, Person, Rule, Site, Source } from './types';
 
 /** Query keys in one place so mutations can invalidate precisely. */
 export const keys = {
@@ -14,7 +14,11 @@ export const keys = {
   rules: (orgId: string, siteId: string) => ['rules', orgId, siteId] as const,
   members: (orgId: string) => ['members', orgId] as const,
   alerts: (orgId: string) => ['alerts', orgId] as const,
+  people: (orgId: string) => ['people', orgId] as const,
 };
+
+export const usePeople = (orgId: string, enabled = true) =>
+  useQuery({ queryKey: keys.people(orgId), queryFn: () => get<{ people: Person[] }>(`/orgs/${orgId}/people`).then((r) => r.people), enabled });
 
 export const useOrgs = () => useQuery({ queryKey: keys.orgs, queryFn: () => get<{ orgs: OrgSummary[] }>('/orgs').then((r) => r.orgs) });
 

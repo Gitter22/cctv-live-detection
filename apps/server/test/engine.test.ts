@@ -155,3 +155,29 @@ describe('line crossing and camera offline', () => {
     expect(e.tick(ist('10:08') + 1000)).toHaveLength(1);
   });
 });
+
+describe('face rules (handover: known -> info, unknown -> danger)', () => {
+  const known = rule('known', { scope: { mode: 'cameras', cameras: ['gate-1'] }, when: { type: 'face', match: 'known' }, then: { severity: 'info' }, cooldownS: 0 });
+  const unknown = rule('unknown', { scope: { mode: 'cameras', cameras: ['gate-1'] }, when: { type: 'face', match: 'unknown' }, then: { severity: 'danger' }, cooldownS: 0 });
+  const faceEv = (at: number): VisionEvent => ({
+    ...base('face.observed', 'gate-1', at),
+    zone_id: 'gate',
+    object: { class: 'person', track_id: 1, confidence: 0.9, bbox: [0.1, 0.1, 0.3, 0.9] },
+    face: { embedding: Array(128).fill(0.0884), score: 0.9, bbox: [0.15, 0.12, 0.2, 0.2] },
+  });
+  it('routes known and unknown faces to the right rule', () => {
+    const e = new RuleEngine(TZ, cams, [known, unknown]);
+    expect(e.handleEvent(faceEv(ist('10:00')), undefined, { personId: 'p1', name: 'Aadil' })).toEqual([
+      expect.objectContaining({ ruleId: 'known', severity: 'info', title: expect.stringMatching(/Known: Aadil/) }),
+    ]);
+    expect(e.handleEvent(faceEv(ist('10:01')), undefined, null)).toEqual([
+      expect.objectContaining({ ruleId: 'unknown', severity: 'danger', title: expect.stringMatching(/Unknown person/) }),
+    ]);
+  });
+  it('limits known rules to specific people', () => {
+    const onlyP2 = rule('p2', { scope: { mode: 'all' }, when: { type: 'face', match: 'known', people: ['00000000-0000-4000-8000-000000000002'] }, then: { severity: 'info' } });
+    const e = new RuleEngine(TZ, cams, [onlyP2]);
+    expect(e.handleEvent(faceEv(ist('10:00')), undefined, { personId: 'someone-else', name: 'X' })).toEqual([]);
+    expect(e.handleEvent(faceEv(ist('10:01')), undefined, { personId: '00000000-0000-4000-8000-000000000002', name: 'Y' })).toHaveLength(1);
+  });
+});

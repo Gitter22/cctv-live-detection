@@ -36,6 +36,11 @@ async function validateRefs(siteId: string, def: RuleDefinition) {
     const missing = w.zones.filter((z) => !zoneKeys.has(z));
     if (missing.length) throw badRequest(`Unknown zone(s): ${missing.join(', ')}`, { path: ['definition', 'when', 'zones'] });
   }
+  if (w.type === 'face' && w.people?.length) {
+    const site = await db.site.findUniqueOrThrow({ where: { id: siteId }, select: { organizationId: true } });
+    const n = await db.person.count({ where: { organizationId: site.organizationId, id: { in: w.people } } });
+    if (n !== new Set(w.people).size) throw badRequest('Unknown person in rule', { path: ['definition', 'when', 'people'] });
+  }
   if (w.type === 'line_cross' && w.lines?.length) {
     const lineKeys = new Set(cameras.flatMap((c) => c.lines.map((l) => l.key)));
     const missing = w.lines.filter((l) => !lineKeys.has(l));

@@ -74,8 +74,8 @@ Step 1 (done, `1d0a1ca`): monorepo, go2rtc, Mosquitto, Postgres, vision service 
 | --- | --- | --- | --- |
 | [x] | E1 | **Face detection and embeddings in vision.** YuNet + SFace (OpenCV zoo), crop from the main stream for tracked persons, embedding in the event (no identity decisions at the edge) | Event carries a face embedding when a face is visible |
 | [x] | E2 | **Face enrolment and matching on the server.** People + face embeddings in pgvector; match with threshold; "unknown" = could not confirm | Unit + integration tests |
-| [ ] | E3 | **Face conditions in rules + UI.** `face: known/unknown` condition; enrol faces from snapshots in the web app | Known face → info alert, unknown → danger alert |
-| [ ] | **E✓** | **Milestone: push** | |
+| [x] | E3 | **Face conditions in rules + UI.** `face: known/unknown` condition; enrol faces from snapshots in the web app | Known face → info alert, unknown → danger alert |
+| [x] | **E✓** | **Milestone: push** | |
 
 ## Phase F: Remote live view and mobile app
 

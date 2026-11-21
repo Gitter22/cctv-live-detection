@@ -45,7 +45,9 @@ export class RulesRunner {
       const engine = await this.engineFor(event.siteId);
       const parsed = VisionEvent.safeParse(event.payload);
       if (!engine || !parsed.success) return;
-      await this.createAlerts(event.siteId, engine.handleEvent(parsed.data));
+      const person = event.facePersonId ? await db.person.findUnique({ where: { id: event.facePersonId }, select: { id: true, name: true } }) : null;
+      const face = person ? { personId: person.id, name: person.name } : null;
+      await this.createAlerts(event.siteId, engine.handleEvent(parsed.data, undefined, face));
     });
   };
 

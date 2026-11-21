@@ -34,6 +34,9 @@ export function describeRule(def: RuleDefinition): string {
     case 'camera_offline':
       cond = `camera offline ≥ ${w.forS} s`;
       break;
+    case 'face':
+      cond = `${w.match === 'known' ? (w.people?.length ? `known face (${w.people.length} selected)` : 'known face') : w.match === 'unknown' ? 'unknown face' : 'any face'}${where}`;
+      break;
   }
   const scope = def.scope.mode === 'all' ? 'all cameras' : def.scope.mode === 'tags' ? `tag ${list(def.scope.tags)}` : list(def.scope.cameras);
   const when = def.schedule?.windows.length ? def.schedule.windows.map((x) => `${days(x.days)}${x.start}–${x.end}`).join(' + ') : 'always';

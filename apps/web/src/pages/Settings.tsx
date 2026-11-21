@@ -7,9 +7,10 @@ import type { AuditEntry, Member, OrgRole, SupportGrant } from '../api/types';
 import { useAuth } from '../auth/auth';
 import { useOrgCtx } from '../components/Layout';
 import { ErrorText, formatTime } from '../components/ui';
+import { PeopleTab } from './People';
 import { SitesTab } from './Sites';
 
-type Tab = 'sites' | 'members' | 'support' | 'audit';
+type Tab = 'sites' | 'members' | 'people' | 'support' | 'audit';
 
 export function SettingsPage() {
   const { can, org } = useOrgCtx();
@@ -18,6 +19,7 @@ export function SettingsPage() {
   const tabs: [Tab, string, boolean][] = [
     ['sites', 'Sites, sources & edges', can('config.read')],
     ['members', 'Members', can('members.manage')],
+    ['people', 'People (faces)', can('footage.read')],
     ['support', 'Support access', isOwnerish],
     ['audit', 'Audit log', isOwnerish],
   ];
@@ -35,6 +37,7 @@ export function SettingsPage() {
       </div>
       {tab === 'sites' && <SitesTab />}
       {tab === 'members' && <MembersTab />}
+      {tab === 'people' && <PeopleTab />}
       {tab === 'support' && <SupportTab />}
       {tab === 'audit' && <AuditTab />}
     </div>

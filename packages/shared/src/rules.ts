@@ -57,6 +57,14 @@ export const RuleCondition = z.discriminatedUnion('type', [
     type: z.literal('camera_offline'),
     forS: Seconds(86_400).default(60),
   }),
+  z.object({
+    type: z.literal('face'),
+    /** known = matched an enrolled person; unknown = could not confirm; any = every face. */
+    match: z.enum(['known', 'unknown', 'any']),
+    /** Only these enrolled people (known only). Omitted = anyone known. */
+    people: z.array(z.string().uuid()).max(50).optional(),
+    zones: Zones,
+  }),
 ]);
 export type RuleCondition = z.infer<typeof RuleCondition>;
 

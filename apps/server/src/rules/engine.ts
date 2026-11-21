@@ -75,9 +75,21 @@ export class RuleEngine {
 
   // ---------------------------------------------------------------- inputs
 
-  handleEvent(ev: VisionEvent, now = Date.parse(ev.ts)): AlertDraft[] {
+  /** `face`: the server's match for face.observed events (null = unknown / not confirmed). */
+  handleEvent(ev: VisionEvent, now = Date.parse(ev.ts), face?: { personId: string; name: string } | null): AlertDraft[] {
     const out: AlertDraft[] = [];
     const cam = ev.camera_id;
+
+    if (ev.type === 'face.observed') {
+      for (const rule of this.matching(cam, 'face')) {
+        const w = rule.definition.when as Extract<RuleCondition, { type: 'face' }>;
+        if (!zoneMatches(w.zones, ev.zone_id ?? '') && w.zones?.length) continue;
+        const known = !!face;
+        if (w.match === 'known' && (!known || (w.people?.length && !w.people.includes(face!.personId)))) continue;
+        if (w.match === 'unknown' && known) continue;
+        this.fire(out, rule, cam, now, ev.id, ev.zone_id ?? null, known ? `Known: ${face!.name}` : 'Unknown person');
+      }
+    }
 
     if (ev.type === 'camera.status' && ev.status) {
       const prev = this.online.get(cam);

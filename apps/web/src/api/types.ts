@@ -128,7 +128,13 @@ export interface Alert {
   closedAt: string | null;
   notes: { at: string; byName: string; text: string }[];
   snapshotUrl: string | null;
-  event: { id: string; type: string; ts: string; payload: { object?: { bbox: [number, number, number, number]; class: string } } } | null;
+  event: {
+    id: string;
+    type: string;
+    ts: string;
+    payload: { object?: { bbox: [number, number, number, number]; class: string } };
+    face: { personId: string | null; similarity: number | null } | null;
+  } | null;
 }
 
 export interface SupportGrant {
@@ -148,4 +154,12 @@ export interface AuditEntry {
   at: string;
   actor: { name: string; email: string } | null;
   meta: unknown;
+}
+
+export interface Person {
+  id: string;
+  name: string;
+  notes: string | null;
+  faces: number;
+  createdAt: string;
 }

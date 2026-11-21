@@ -2,7 +2,7 @@ import { RuleDefinition, type RuleCondition } from '@cctv/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { del, errorMessage, patch, post } from '../api/client';
-import { keys, useCameras, useRules } from '../api/hooks';
+import { keys, useCameras, usePeople, useRules } from '../api/hooks';
 import type { Camera, Rule, Severity } from '../api/types';
 import { describeRule } from '../components/describe-rule';
 import { useOrgCtx } from '../components/Layout';
@@ -87,6 +87,7 @@ const COND_LABEL: Record<CondType, string> = {
   count: 'Too many / too few',
   line_cross: 'Crosses a line',
   camera_offline: 'Camera offline',
+  face: 'A face is seen',
 };
 const CLASSES = ['person', 'car', 'motorcycle', 'bicycle', 'truck', 'dog', 'cat'];
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -111,6 +112,8 @@ interface FormState {
   severity: Severity;
   title: string;
   cooldownS: number;
+  faceMatch: 'known' | 'unknown' | 'any';
+  people: string[];
 }
 
 function initial(rule: Rule | null): FormState {
@@ -136,6 +139,8 @@ function initial(rule: Rule | null): FormState {
     severity: d?.then.severity ?? 'warning',
     title: d?.then.title ?? '',
     cooldownS: d?.cooldownS ?? 300,
+    faceMatch: w?.type === 'face' ? w.match : 'unknown',
+    people: w?.type === 'face' ? (w.people ?? []) : [],
   };
 }
 
@@ -156,7 +161,9 @@ function toDefinition(f: FormState) {
           ? { type: f.type, classes: f.classes, zones, op: f.op, n: Number(f.n), forS: Number(f.forS) }
           : f.type === 'line_cross'
             ? { type: f.type, classes: f.classes, lines: f.lines.length ? f.lines : undefined, direction: f.direction }
-            : { type: f.type, forS: Number(f.forS) };
+            : f.type === 'face'
+              ? { type: f.type, match: f.faceMatch, people: f.faceMatch === 'known' && f.people.length ? f.people : undefined, zones }
+              : { type: f.type, forS: Number(f.forS) };
   return RuleDefinition.safeParse({
     scope,
     when,
@@ -172,7 +179,8 @@ function RuleForm({ rule, cameras, onClose }: { rule: Rule | null; cameras: Came
   const [f, setF] = useState<FormState>(() => initial(rule));
   const [error, setError] = useState<string | null>(null);
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setF((s) => ({ ...s, [k]: v }));
-  const toggleIn = (k: 'classes' | 'zones' | 'lines' | 'cameras', v: string) =>
+  const people = usePeople(orgId);
+  const toggleIn = (k: 'classes' | 'zones' | 'lines' | 'cameras' | 'people', v: string) =>
     setF((s) => ({ ...s, [k]: s[k].includes(v) ? s[k].filter((x) => x !== v) : [...s[k], v] }));
 
   // Zones/lines offered = those of the cameras in scope.
@@ -216,8 +224,8 @@ function RuleForm({ rule, cameras, onClose }: { rule: Rule | null; cameras: Came
     save.mutate(parsed.data);
   };
 
-  const hasClasses = f.type !== 'camera_offline';
-  const hasZones = f.type === 'presence' || f.type === 'absence' || f.type === 'count';
+  const hasClasses = f.type !== 'camera_offline' && f.type !== 'face';
+  const hasZones = f.type === 'presence' || f.type === 'absence' || f.type === 'count' || f.type === 'face';
 
   return (
     <Modal title={rule ? `Edit rule` : 'New rule'} onClose={onClose}>
@@ -294,6 +302,28 @@ function RuleForm({ rule, cameras, onClose }: { rule: Rule | null; cameras: Came
               <input type="number" min={0} value={f.n} onChange={(e) => set('n', Number(e.target.value))} />
             </label>
           </>
+        )}
+        {f.type === 'face' && (
+          <label>
+            Whose face
+            <select value={f.faceMatch} onChange={(e) => set('faceMatch', e.target.value as FormState['faceMatch'])}>
+              <option value="unknown">Unknown (couldn't confirm)</option>
+              <option value="known">Known person</option>
+              <option value="any">Any face</option>
+            </select>
+          </label>
+        )}
+        {f.type === 'face' && f.faceMatch === 'known' && (
+          <fieldset className="checks">
+            <legend className="small">People (none = anyone known)</legend>
+            {(people.data ?? []).length === 0 && <span className="muted small">No people enrolled yet (Settings → People).</span>}
+            {(people.data ?? []).map((p) => (
+              <label key={p.id} className="check">
+                <input type="checkbox" checked={f.people.includes(p.id)} onChange={() => toggleIn('people', p.id)} />
+                {p.name}
+              </label>
+            ))}
+          </fieldset>
         )}
         {f.type === 'line_cross' && (
           <label>

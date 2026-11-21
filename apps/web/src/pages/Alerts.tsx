@@ -7,6 +7,7 @@ import type { Alert } from '../api/types';
 import { useOrgCtx } from '../components/Layout';
 import { ErrorText, SeverityBadge, formatTime, timeAgo, useTicker } from '../components/ui';
 import { LiveView } from './LiveView';
+import { FacePanel } from './People';
 
 export function AlertsPage() {
   const { orgId, site, sites, can } = useOrgCtx();
@@ -105,7 +106,7 @@ function AlertDetail({ alert, timezone }: { alert: Alert; timezone?: string }) {
         {alert.snapshotUrl ? (
           <>
             <img src={alert.snapshotUrl} alt="Snapshot at the time of the alert" />
-            {bbox && (
+            {bbox && alert.event?.type !== 'face.observed' && (
               <span
                 className="bbox"
                 style={{ left: `${bbox[0] * 100}%`, top: `${bbox[1] * 100}%`, width: `${(bbox[2] - bbox[0]) * 100}%`, height: `${(bbox[3] - bbox[1]) * 100}%` }}
@@ -116,6 +117,7 @@ function AlertDetail({ alert, timezone }: { alert: Alert; timezone?: string }) {
           <span className="muted small">No snapshot for this alert</span>
         )}
       </div>
+      <FacePanel alert={alert} />
       <dl className="facts">
         <dt>When</dt>
         <dd>{formatTime(alert.createdAt, timezone)}</dd>
