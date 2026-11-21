@@ -1,5 +1,6 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router';
 import { useAuth } from './auth/auth';
+import { LiveEmbed } from './embed/LiveEmbed';
 import { OrgIndexRedirect, OrgLayout } from './components/Layout';
 import { AdminPage } from './pages/Admin';
 import { AlertsPage } from './pages/Alerts';
@@ -23,6 +24,8 @@ export function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      {/* Mobile app WebView: authenticates with the injected Bearer token, no shell */}
+      <Route path="/embed/live" element={<LiveEmbed />} />
       <Route element={<RequireAuth />}>
         <Route index element={<OrgIndexRedirect />} />
         <Route path="/admin" element={<AdminPage />} />

@@ -98,3 +98,16 @@ describe('session', () => {
     expect((await login(u.email, PASSWORD, 'http://localhost:5173')).status).toBe(200);
   });
 });
+
+describe('CSRF guard and Bearer tokens', () => {
+  it('lets Bearer requests from any origin through, but not cookie requests', async () => {
+    const u = await makeUser();
+    const login = await request(app).post('/api/auth/login').set('X-Client', 'mobile').send({ email: u.email, password: PASSWORD });
+    const token = login.body.token as string;
+    const viaBearer = await request(app).post('/api/auth/logout').set('Authorization', `Bearer ${token}`).set('Origin', 'http://192.168.1.50:5173');
+    expect(viaBearer.status).toBe(204);
+    const cookie = String(login.headers['set-cookie']).split(';')[0]!;
+    const viaCookie = await request(app).post('/api/auth/logout').set('Cookie', cookie).set('Origin', 'https://evil.example');
+    expect(viaCookie.status).toBe(403);
+  });
+});

@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { authedImage } from '../../src/api';
@@ -36,6 +36,13 @@ export default function AlertDetail() {
           <Text style={ui.muted}>
             Camera {a.cameraKey ?? '—'} · Rule {a.ruleName ?? '—'}
           </Text>
+          {a.cameraKey && (
+            <Link href={{ pathname: '/live', params: { site: a.siteId, key: a.cameraKey } }} asChild>
+              <Pressable style={[ui.button, { backgroundColor: colors.ok }]} accessibilityRole="button">
+                <Text style={ui.buttonText}>Watch live</Text>
+              </Pressable>
+            </Link>
+          )}
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {a.status === 'OPEN' && (
               <Pressable style={[ui.button, { flex: 1 }]} onPress={() => act.mutate({ action: 'ack' })}>

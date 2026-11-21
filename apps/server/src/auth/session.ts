@@ -76,6 +76,9 @@ export function requireUser(req: Request): AuthUser {
  */
 export function csrfGuard(req: Request, _res: Response, next: NextFunction) {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  // Bearer-token requests (mobile app, its WebView player) can't be forged cross-site:
+  // a malicious page can't read the token. Only cookie sessions need the origin check.
+  if (req.headers.authorization?.startsWith('Bearer ') && !(req.cookies as Record<string, string> | undefined)?.[SESSION_COOKIE]) return next();
   const origin = req.headers.origin;
   if (!origin) return next();
   const host = req.headers.host;
