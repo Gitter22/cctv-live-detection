@@ -108,3 +108,77 @@ export const UpdateSourceBody = z
   .partial()
   .refine((b) => Object.keys(b).length > 0, 'nothing to update');
 export type UpdateSourceBody = z.infer<typeof UpdateSourceBody>;
+
+// ---------------------------------------------------------------- cameras, zones, lines
+
+/** Generic per-camera detection settings (what vision looks for; NOT business rules). */
+const DetectionFields = {
+  /** COCO class names to track, e.g. person, car, dog */
+  classes: z.array(z.string().min(1).max(40)).min(1).max(80),
+  /** Score needed to start a track */
+  confidence: z.number().min(0.05).max(0.99),
+  /** Weaker detections only keep existing tracks alive */
+  lowConfidence: z.number().min(0.05).max(0.99),
+  /** Max detections per second for this camera */
+  detectFps: z.number().min(0.2).max(15),
+  /** Skip the detector on still frames */
+  motionGate: z.boolean(),
+};
+
+export const DETECTION_DEFAULTS = {
+  classes: ['person'],
+  confidence: 0.5,
+  lowConfidence: 0.25,
+  detectFps: 5,
+  motionGate: true,
+};
+
+/** Complete settings (stored values merged over DETECTION_DEFAULTS). */
+export const DetectionSettings = z.object(DetectionFields);
+/** What clients send: any subset, no defaults injected (they would overwrite stored values). */
+export const DetectionPatch = z.object(DetectionFields).partial();
+export type DetectionSettings = z.infer<typeof DetectionSettings>;
+
+const CameraFields = {
+  key: Slug,
+  label: Name,
+  sourceId: Uuid.nullable(),
+  channel: z.number().int().min(1).max(512).nullable(),
+  /** Optional per-camera URLs; override the source template. Stored encrypted. */
+  subUrl: RtspUrl.nullable(),
+  mainUrl: RtspUrl.nullable(),
+  enabled: z.boolean(),
+  tags: z.array(Slug).max(20),
+  detection: DetectionPatch,
+};
+
+export const CreateCameraBody = z.object({
+  ...CameraFields,
+  sourceId: CameraFields.sourceId.optional(),
+  channel: CameraFields.channel.optional(),
+  subUrl: CameraFields.subUrl.optional(),
+  mainUrl: CameraFields.mainUrl.optional(),
+  enabled: z.boolean().default(true),
+  tags: CameraFields.tags.default([]),
+  detection: CameraFields.detection.default({}),
+});
+export type CreateCameraBody = z.infer<typeof CreateCameraBody>;
+
+export const UpdateCameraBody = z
+  .object(CameraFields)
+  .partial()
+  .refine((b) => Object.keys(b).length > 0, 'nothing to update');
+export type UpdateCameraBody = z.infer<typeof UpdateCameraBody>;
+
+export const Point = z.tuple([z.number().min(0).max(1), z.number().min(0).max(1)]);
+export type Point = z.infer<typeof Point>;
+
+const ZoneFields = { key: Slug, label: Name, polygon: z.array(Point).min(3).max(64) };
+export const CreateZoneBody = z.object(ZoneFields);
+export const UpdateZoneBody = z.object(ZoneFields).partial().refine((b) => Object.keys(b).length > 0, 'nothing to update');
+
+const LineFields = { key: Slug, label: Name, start: Point, end: Point };
+export const CreateLineBody = z
+  .object(LineFields)
+  .refine((l) => l.start[0] !== l.end[0] || l.start[1] !== l.end[1], 'start and end must differ');
+export const UpdateLineBody = z.object(LineFields).partial().refine((b) => Object.keys(b).length > 0, 'nothing to update');

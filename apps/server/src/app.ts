@@ -3,6 +3,7 @@ import express from 'express';
 import { authenticate, csrfGuard } from './auth/session';
 import { errorMiddleware, notFound } from './lib/http';
 import { authRouter } from './routes/auth';
+import { camerasRouter } from './routes/cameras';
 import { healthRouter } from './routes/health';
 import { orgsRouter } from './routes/orgs';
 import { sitesRouter } from './routes/sites';
@@ -21,6 +22,7 @@ export function createApp() {
   app.use('/api', orgsRouter);
   app.use('/api', sitesRouter);
   app.use('/api', sourcesRouter);
+  app.use('/api', camerasRouter);
 
   app.use('/api', (_req, _res, next) => next(notFound('Unknown API route')));
   app.use(errorMiddleware);
