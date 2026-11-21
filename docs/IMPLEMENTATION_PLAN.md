@@ -33,7 +33,7 @@ Step 1 (done, `1d0a1ca`): monorepo, go2rtc, Mosquitto, Postgres, vision service 
 
 | | ID | Task | Done when |
 | --- | --- | --- | --- |
-| [ ] | B1 | **Edge scaffold.** `apps/edge` (TypeScript, Docker): env `SERVER_URL`, `SITE_ID`, `EDGE_TOKEN`; fetch config with retry and ETag; cache last good config on disk | Unit tests; runs against the local server |
+| [x] | B1 | **Edge scaffold.** `apps/edge` (TypeScript, Docker): env `SERVER_URL`, `SITE_ID`, `EDGE_TOKEN`; fetch config with retry and ETag; cache last good config on disk | Unit tests; runs against the local server |
 | [ ] | B2 | **go2rtc from config.** Generate `go2rtc.yaml` into a shared writable volume, restart go2rtc only when streams change | Streams in go2rtc match the server's cameras |
 | [ ] | B3 | **Vision from config.** Edge writes `vision.yaml`; vision watches it and hot-reloads only the changed cameras | Changing a zone in the API changes vision behaviour without a restart |
 | [ ] | B4 | **Event forwarding.** Edge subscribes to local MQTT, uploads events + snapshots to `POST /edge/v1/events`; server stores Event + snapshot (disk store), idempotent by event ID; edge buffers on disk while the server is down | Real camera event appears in Postgres with its snapshot; survives a server restart |

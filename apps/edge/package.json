@@ -1,0 +1,24 @@
+{
+  "name": "@cctv/edge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Edge agent: runs at a site, syncs config from the server, drives go2rtc + vision, forwards events",
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "prebuild": "npm run build --prefix ../../packages/shared",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/main.js",
+    "pretypecheck": "npm run build --prefix ../../packages/shared",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "pretest": "npm run build --prefix ../../packages/shared",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "dotenv-cli": "^11.1.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  }
+}

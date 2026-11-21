@@ -7,28 +7,8 @@ import { decryptSecret } from '../lib/secrets';
 import { cameraSecretCtx, effectiveDetection, streamProblem } from '../routes/cameras';
 import { sourceSecretCtx } from '../routes/sources';
 
-/**
- * Everything an edge needs to run its site. The ONLY place secrets are decrypted,
- * and only for the authenticated edge of that site.
- */
-export interface EdgeCamera {
-  key: string;
-  label: string;
-  enabled: boolean;
-  tags: string[];
-  streams: { sub: string; main: string | null };
-  detection: ReturnType<typeof effectiveDetection>;
-  zones: { key: string; label: string; polygon: [number, number][] }[];
-  lines: { key: string; label: string; start: [number, number]; end: [number, number] }[];
-}
-
-export interface EdgeSiteConfig {
-  schema: 'edge.config/v1';
-  site: { id: string; slug: string; name: string; timezone: string };
-  cameras: EdgeCamera[];
-  /** Cameras that cannot run (misconfigured), with the reason. */
-  skipped: { key: string; reason: string }[];
-}
+export type { EdgeCamera, EdgeConfig as EdgeSiteConfig } from '@cctv/shared';
+import type { EdgeCamera, EdgeConfig as EdgeSiteConfig } from '@cctv/shared';
 
 function sourceUrls(source: Source, channel: number | null): { sub: string | null; main: string | null } {
   if (source.kind === 'RAW_URL') {
