@@ -15,7 +15,7 @@ Step 1 (done, `1d0a1ca`): monorepo, go2rtc, Mosquitto, Postgres, vision service 
 
 | | ID | Task | Done when |
 | --- | --- | --- | --- |
-| [ ] | A1 | **Server scaffold.** `apps/server`: TypeScript → CommonJS, Express, zod-validated env, `/api/health`, vitest, Dockerfile, Compose service, root scripts | `npm test -w apps/server` passes; `curl /api/health` returns OK from Docker |
+| [x] | A1 | **Server scaffold.** `apps/server`: TypeScript → CommonJS, Express, zod-validated env, `/api/health`, vitest, Dockerfile, Compose service, root scripts | `npm test -w apps/server` passes; `curl /api/health` returns OK from Docker |
 | [ ] | A2 | **Shared package in TypeScript.** `packages/shared`: zod schemas for VisionEvent v1 (matches the JSON Schema), common enums, topic helpers. Built to CJS + `.d.ts` | Server imports it; test validates a real vision event payload |
 | [ ] | A3 | **Database schema.** Prisma schema for all models in the architecture, first migration, `vector` extension, Prisma client in the server | `prisma migrate deploy` works on a fresh DB; schema test inserts and reads a site |
 | [ ] | A4 | **Secrets crypto.** AES-256-GCM helper with `SECRETS_KEY`, key-version prefix, redaction helper for API output | Unit tests: round trip, tamper detection, wrong key fails |

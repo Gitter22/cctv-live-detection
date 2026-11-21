@@ -55,6 +55,36 @@ services:
       timeout: 3s
       retries: 20
 
+  server:
+    build:
+      context: .
+      dockerfile: docker/server.Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      SERVER_PORT: 4000
+      LOG_LEVEL: ${SERVER_LOG_LEVEL:-info}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      SECRETS_KEY: ${SECRETS_KEY}
+      WEB_ORIGINS: ${WEB_ORIGINS:-http://localhost:5173}
+      SNAPSHOT_STORE: /data/store
+      SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:-}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-}
+      SUPERADMIN_NAME: ${SUPERADMIN_NAME:-Platform Admin}
+    ports:
+      - '${SERVER_PORT:-4000}:4000'
+    volumes:
+      - server-store:/data/store
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:4000/api/health']
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
   vision:
     build:
       context: .
@@ -85,4 +115,5 @@ services:
 
 volumes:
   pgdata:
+  server-store:
   mosquitto-data:
