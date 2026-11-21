@@ -6,6 +6,7 @@ import { alertsRouter } from './routes/alerts';
 import { authRouter } from './routes/auth';
 import { camerasRouter } from './routes/cameras';
 import { edgeApiRouter, edgesRouter } from './routes/edges';
+import { governanceRouter } from './routes/governance';
 import { healthRouter } from './routes/health';
 import { orgsRouter } from './routes/orgs';
 import { rulesRouter } from './routes/rules';
@@ -37,6 +38,7 @@ export function createApp() {
   app.use('/api', rulesRouter);
   app.use('/api', alertsRouter);
   app.use('/api', streamRouter);
+  app.use('/api', governanceRouter);
 
   app.use('/api', (_req, _res, next) => next(notFound('Unknown API route')));
   app.use(errorMiddleware);

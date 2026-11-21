@@ -14,6 +14,7 @@ export const orgsRouter = Router();
 export async function orgCtx(req: Request) {
   const user = requireUser(req);
   const access = await orgAccess(user, param(req, 'orgId'));
+  access.via = `${req.method} ${req.originalUrl.split('?')[0]}`;
   return { user, access };
 }
 

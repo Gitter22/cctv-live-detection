@@ -1,6 +1,7 @@
 import type { OrgRole, Prisma } from '@prisma/client';
 import { ORG_ROLE_RANK } from '@cctv/shared';
 import type { AuthUser } from '../auth/session';
+import { audit } from '../lib/audit';
 import { db } from '../lib/db';
 import { forbidden, notFound } from '../lib/http';
 
@@ -36,6 +37,8 @@ export interface OrgAccess {
   platformAdmin: boolean;
   supportGrantActive: boolean;
   caps: Set<Capability>;
+  /** Request path, recorded when the platform admin views footage under a support grant. */
+  via?: string;
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -78,9 +81,19 @@ export async function orgAccess(user: AuthUser, organizationId: string | undefin
   };
 }
 
-/** Throw 403 unless the capability is held. */
+/** Throw 403 unless the capability is held. Footage viewed via a support grant is audit-logged. */
 export function requireCap(access: OrgAccess, cap: Capability): void {
   if (!access.caps.has(cap)) throw forbidden(`Missing permission: ${cap}`);
+  if (cap === 'footage.read' && access.platformAdmin && !access.role) {
+    void audit({
+      actorId: access.userId,
+      actorType: 'user',
+      organizationId: access.organizationId,
+      action: 'support.footage_access',
+      targetType: 'path',
+      targetId: access.via,
+    });
+  }
 }
 
 export function hasRoleAtLeast(access: OrgAccess, role: OrgRole): boolean {
