@@ -63,3 +63,11 @@ export async function siteCameraStatus(siteId: string): Promise<Record<string, C
   }
   return out;
 }
+
+/** Live player base URL reported by the site's freshest active edge (null if none / stale). */
+export async function siteLiveUrl(siteId: string): Promise<string | null> {
+  const edge = await db.edge.findFirst({ where: { siteId, status: 'ACTIVE', lastSeenAt: { not: null } }, orderBy: { lastSeenAt: 'desc' } });
+  const hb = EdgeHeartbeat.safeParse(edge?.health);
+  if (!edge || !hb.success || Date.now() - (edge.lastSeenAt?.getTime() ?? 0) > EDGE_STALE_MS) return null;
+  return hb.data.liveUrl ?? null;
+}

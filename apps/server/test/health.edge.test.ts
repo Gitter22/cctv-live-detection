@@ -62,3 +62,20 @@ describe('edge health', () => {
     expect((await pa.get(`/api/orgs/${org.id}/sites/${cam.siteId}/cameras/${cam.id}/thumbnail`)).status).toBe(403);
   });
 });
+
+describe('live view (LAN)', () => {
+  it('returns player URLs after the permission check, only while the edge reports a live URL', async () => {
+    const { org, agent, siteBase, cam, token } = await setup();
+    expect((await agent.get(`${siteBase}/cameras/${cam.id}/live`)).status).toBe(404); // no heartbeat yet
+    await request(app)
+      .post('/edge/v1/heartbeat')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ ...heartbeat(true), liveUrl: 'http://192.168.1.50:1984' });
+    const live = await agent.get(`${siteBase}/cameras/${cam.id}/live`);
+    expect(live.status).toBe(200);
+    expect(live.body.sd).toBe('http://192.168.1.50:1984/stream.html?src=entrance-1&mode=webrtc,mse,hls,mjpeg');
+    expect(live.body.hd).toContain('src=entrance-1_main');
+    const pa = await agentFor((await makeUser({ superAdmin: true })).email);
+    expect((await pa.get(`/api/orgs/${org.id}/sites/${cam.siteId}/cameras/${cam.id}/live`)).status).toBe(403);
+  });
+});

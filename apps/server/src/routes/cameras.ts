@@ -11,7 +11,7 @@ import {
 import type { Camera, Line, Prisma, Source, Zone } from '@prisma/client';
 import { Router } from 'express';
 import { type OrgAccess, loadSite, requireCap } from '../access/access';
-import { siteCameraStatus, thumbnailKey } from '../edge/health';
+import { siteCameraStatus, siteLiveUrl, thumbnailKey } from '../edge/health';
 import { audit } from '../lib/audit';
 import { db } from '../lib/db';
 import { badRequest, conflict, notFound, param } from '../lib/http';
@@ -123,6 +123,22 @@ camerasRouter.get(`${base}/:cameraId/thumbnail`, async (req, res) => {
   res.setHeader('Content-Type', 'image/jpeg');
   res.setHeader('Cache-Control', 'private, no-store');
   res.send(jpeg);
+});
+
+/**
+ * Live view (LAN phase): after the footage permission check, return the site's go2rtc player
+ * URLs for this camera. Phase F replaces this with signalling through the server.
+ */
+camerasRouter.get(`${base}/:cameraId/live`, async (req, res) => {
+  const { access } = await orgCtx(req);
+  requireCap(access, 'footage.read');
+  const cam = await loadCamera(access, param(req, 'siteId'), param(req, 'cameraId'));
+  if (!cam.enabled) throw notFound('Camera is disabled');
+  const base = await siteLiveUrl(cam.siteId);
+  if (!base) throw notFound('Live view is not available: the edge is offline or EDGE_LIVE_URL is not set on it');
+  const player = (stream: string) => `${base.replace(/\/$/, '')}/stream.html?src=${encodeURIComponent(stream)}&mode=webrtc,mse,hls,mjpeg`;
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ sd: player(cam.key), hd: player(`${cam.key}_main`) });
 });
 
 camerasRouter.patch(`${base}/:cameraId`, async (req, res) => {

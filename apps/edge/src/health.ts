@@ -54,10 +54,10 @@ export class HealthCollector {
   }
 
   /** Only cameras of the current config are reported. */
-  snapshot(cameraKeys: string[], spool: number): EdgeHeartbeat {
+  snapshot(cameraKeys: string[], spool: number, liveUrl?: string): EdgeHeartbeat {
     const cameras: Record<string, CameraHealth> = {};
     for (const key of cameraKeys) cameras[key] = this.cameras[key] ?? { online: false, reason: 'no status from vision yet', since: null, metrics: null };
-    return { version: VERSION, uptimeS: Math.round((Date.now() - started) / 1000), vision: { online: this.visionOnline }, spool, cameras };
+    return { version: VERSION, uptimeS: Math.round((Date.now() - started) / 1000), vision: { online: this.visionOnline }, spool, cameras, liveUrl: liveUrl ?? null };
   }
 }
 

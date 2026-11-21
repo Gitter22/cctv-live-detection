@@ -65,8 +65,8 @@ Step 1 (done, `1d0a1ca`): monorepo, go2rtc, Mosquitto, Postgres, vision service 
 | [x] | D5 | **Zone and line editor.** Draw polygons and lines on the camera thumbnail | Saved zone shows up in vision config |
 | [x] | D6 | **Rules editor.** Scope picker, condition forms, schedule, severity, cooldown | Create the factory example rules in the UI |
 | [x] | D7 | **Alerts.** Live feed (SSE), filters, detail with snapshot, acknowledge/close/notes | New alert appears without reload |
-| [ ] | D8 | **Live view (LAN).** Play a camera via the site's go2rtc (WebRTC/MSE) after a server permission check | Live video plays from the alert detail |
-| [ ] | **D✓** | **Milestone: push** | |
+| [x] | D8 | **Live view (LAN).** Play a camera via the site's go2rtc (WebRTC/MSE) after a server permission check | Live video plays from the alert detail |
+| [x] | **D✓** | **Milestone: push** | |
 
 ## Phase E: Faces
 

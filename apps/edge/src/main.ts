@@ -50,7 +50,7 @@ async function main() {
   const enabledKeys = () => (sync.current?.cameras ?? []).filter((c) => c.enabled).map((c) => c.key);
   const heartbeatTimer = setInterval(async () => {
     const spoolSize = (await spool.list()).length;
-    await sendHeartbeat(env.SERVER_URL, env.EDGE_TOKEN, health.snapshot(enabledKeys(), spoolSize));
+    await sendHeartbeat(env.SERVER_URL, env.EDGE_TOKEN, health.snapshot(enabledKeys(), spoolSize, env.EDGE_LIVE_URL));
   }, 30_000);
   const thumbs = () =>
     uploadThumbnails({ serverUrl: env.SERVER_URL, token: env.EDGE_TOKEN, go2rtcApi: env.GO2RTC_API, cameraKeys: enabledKeys() });

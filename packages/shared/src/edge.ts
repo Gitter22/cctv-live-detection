@@ -46,5 +46,7 @@ export const EdgeHeartbeat = z.object({
   vision: z.object({ online: z.boolean() }),
   spool: z.number().int().nonnegative(),
   cameras: z.record(z.string(), CameraHealth),
+  /** Base URL of the site's go2rtc player as seen from viewers' browsers (LAN/Tailscale). */
+  liveUrl: z.string().url().nullish(),
 });
 export type EdgeHeartbeat = z.infer<typeof EdgeHeartbeat>;

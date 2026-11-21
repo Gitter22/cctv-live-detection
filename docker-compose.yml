@@ -119,6 +119,8 @@ services:
       GO2RTC_RTSP: rtsp://go2rtc:8554
       MQTT_URL: mqtt://mosquitto:1883
       MQTT_TOPIC_PREFIX: ${MQTT_TOPIC_PREFIX:-cctv/v1}
+      # Where browsers reach this site's go2rtc player (LAN live view)
+      EDGE_LIVE_URL: ${EDGE_LIVE_URL:-http://localhost:1984}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     volumes:
       - edge-gen:/gen

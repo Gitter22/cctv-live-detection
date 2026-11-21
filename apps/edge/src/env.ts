@@ -19,6 +19,8 @@ const EnvSchema = z.object({
   MQTT_TOPIC_PREFIX: z.string().default('cctv/v1'),
   /** Snapshots written by vision (shared volume). */
   SNAPSHOT_DIR: z.string().default('/data/snapshots'),
+  /** go2rtc player URL as browsers reach it, e.g. http://192.168.1.50:1984 (LAN live view). */
+  EDGE_LIVE_URL: z.string().url().optional(),
   /** How often to upload a still per camera (zone editor). */
   THUMBNAIL_INTERVAL_S: z.coerce.number().min(60).default(600),
   LOG_LEVEL: z
