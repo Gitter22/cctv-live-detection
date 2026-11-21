@@ -20,7 +20,7 @@ Step 1 (done, `1d0a1ca`): monorepo, go2rtc, Mosquitto, Postgres, vision service 
 | [x] | A3 | **Database schema.** Prisma schema for all models in the architecture, first migration, `vector` extension, Prisma client in the server | `prisma migrate deploy` works on a fresh DB; schema test inserts and reads a site |
 | [x] | A4 | **Secrets crypto.** AES-256-GCM helper with `SECRETS_KEY`, key-version prefix, redaction helper for API output | Unit tests: round trip, tamper detection, wrong key fails |
 | [x] | A5 | **Auth.** Password hashing (scrypt, no native deps), login/logout/me, httpOnly cookie with JWT, rate limit on login, CSRF protection (SameSite + Origin check) | Tests: login OK/fail, cookie flags, protected route 401 |
-| [ ] | A6 | **Access layer.** Request context with memberships; `requireOrgRole`, site scoping, platform-admin rules (config only, no footage) in one place | Tests: user of org A gets 404 for every org B resource; viewer cannot write |
+| [x] | A6 | **Access layer.** Request context with memberships; `requireOrgRole`, site scoping, platform-admin rules (config only, no footage) in one place | Tests: user of org A gets 404 for every org B resource; viewer cannot write |
 | [ ] | A7 | **Organizations and members API.** Super admin creates orgs + first owner; owner/admin invite and manage members, roles, site limits | API tests for each role |
 | [ ] | A8 | **Sites API.** CRUD with timezone validation | API tests |
 | [ ] | A9 | **Sources API.** NVR/camera (vendor template) and raw URL kinds; secrets write-only (never returned) | Tests: password never appears in any response; URL built from template |
