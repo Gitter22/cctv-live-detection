@@ -2,13 +2,20 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Redirect, Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
+import { useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from '../src/auth';
+import { registerForPush, useNotificationTaps } from '../src/push';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 
 function Gate() {
   const { ready, session } = useAuth();
   const path = usePathname();
+  const [, setPushStatus] = useState('');
+  useNotificationTaps();
+  useEffect(() => {
+    if (session) void registerForPush(session).then(setPushStatus).catch((e) => setPushStatus(String(e)));
+  }, [session]);
   if (!ready)
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>

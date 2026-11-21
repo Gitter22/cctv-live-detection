@@ -11,6 +11,7 @@ import { governanceRouter } from './routes/governance';
 import { healthRouter } from './routes/health';
 import { orgsRouter } from './routes/orgs';
 import { peopleRouter } from './routes/people';
+import { pushRouter } from './routes/push';
 import { rulesRouter } from './routes/rules';
 import { sitesRouter } from './routes/sites';
 import { streamRouter } from './routes/stream';
@@ -53,6 +54,7 @@ export function createApp() {
   app.use('/api', streamRouter);
   app.use('/api', governanceRouter);
   app.use('/api', peopleRouter);
+  app.use('/api', pushRouter);
 
   app.use('/api', (_req, _res, next) => next(notFound('Unknown API route')));
   app.use(errorMiddleware);
