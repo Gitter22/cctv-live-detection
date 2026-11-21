@@ -51,8 +51,8 @@ Step 1 (done, `1d0a1ca`): monorepo, go2rtc, Mosquitto, Postgres, vision service 
 | [x] | C4 | **Events and alerts API.** List/filter, alert acknowledge/close/notes; snapshots served via permission check / signed URL | API tests incl. tenancy and footage rules |
 | [x] | C5 | **Live updates.** Server-Sent Events stream of alerts and camera status per org/site | Test client receives an alert within 1 s |
 | [x] | C6 | **Support grants and audit log.** Owner grants time-limited support access; every footage access and config change is audit-logged | Tests: super admin blocked without grant, allowed with one, logged |
-| [ ] | C7 | **Home rules.** Seed rules: person at entrance, person on first floor / last floor at night, camera offline | Walk past a camera → alert row with snapshot |
-| [ ] | **C✓** | **Milestone: push** | |
+| [x] | C7 | **Home rules.** Seed rules: person at entrance, person on first floor / last floor at night, camera offline | Walk past a camera → alert row with snapshot |
+| [x] | **C✓** | **Milestone: push** | |
 
 ## Phase D: Web app
 

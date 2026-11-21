@@ -18,7 +18,8 @@
     "db:migrate:dev": "dotenv -e ../../.env -- prisma migrate dev",
     "postinstall": "prisma generate",
     "seed": "dotenv -e ../../.env -- tsx src/scripts/seed.ts",
-    "import:home": "dotenv -e ../../.env -- tsx src/scripts/import-home.ts"
+    "import:home": "dotenv -e ../../.env -- tsx src/scripts/import-home.ts",
+    "seed:home-rules": "dotenv -e ../../.env -- tsx src/scripts/home-rules.ts"
   },
   "dependencies": {
     "@cctv/shared": "^0.1.0",
