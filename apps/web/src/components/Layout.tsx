@@ -52,7 +52,17 @@ export function OrgLayout() {
     setSiteIdState(id);
   };
 
-  if (org.isError) return <div className="center muted">Organization not found.</div>;
+  if (org.isError) {
+    // Not ours (e.g. a stale link, or the previous user's page after switching accounts): go to
+    // the user's own first org instead of a dead end.
+    const status = (org.error as { status?: number } | null)?.status;
+    if (status === 403 || status === 404) return <Navigate to="/" replace />;
+    return (
+      <div className="center muted">
+        Couldn't load this organization. <Link to="/">Go home</Link>
+      </div>
+    );
+  }
 
   const value: OrgCtx = {
     orgId,
