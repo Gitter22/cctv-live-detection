@@ -101,3 +101,13 @@ Step 1 (done, `1d0a1ca`): monorepo, go2rtc, Mosquitto, Postgres, vision service 
 | [x] | G4 | **Security flows.** Cross-org access attempts, viewer write attempts, super admin footage without/with support grant, secrets never visible in network responses | Every attempt correctly denied/allowed (DevTools network log checked) |
 | [x] | G5 | **E2E report.** `docs/E2E_REPORT.md` with results, screenshots, found bugs and fixes | Report committed |
 | [x] | **G✓** | **Milestone: push** | |
+
+## Backlog (parked, not scheduled)
+
+| Item | Notes |
+| --- | --- |
+| Native live view in the app (`react-native-webrtc`) instead of the WebView player | Faster start, fullscreen/PiP control; decide after testing the WebView player on a real phone |
+| Change / forgot password | No way for users to change their own password yet |
+| Rename/delete sites and organizations in the web UI | The API already supports it |
+| Organization switcher in the mobile app | The app uses the user's first organization |
+| H.264 fallback check in a browser without H.265 (e.g. Firefox) | Untested |
