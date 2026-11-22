@@ -96,8 +96,8 @@ Step 1 (done, `1d0a1ca`): monorepo, go2rtc, Mosquitto, Postgres, vision service 
 | | ID | Task | Done when |
 | --- | --- | --- | --- |
 | [x] | G1 | **E2E fixtures.** Seed two orgs (home + demo factory) with users per role; test-event injector for a camera | Repeatable reset + seed command |
-| [ ] | G2 | **Admin and config flows.** In Chrome: super admin creates org, owner adds site/source/camera/zone/rule; edge picks it up | All steps pass; screenshots saved |
-| [ ] | G3 | **Alert flows.** Injected and real events → live alert in the browser → acknowledge → close; live view plays | All steps pass; console has no errors |
-| [ ] | G4 | **Security flows.** Cross-org access attempts, viewer write attempts, super admin footage without/with support grant, secrets never visible in network responses | Every attempt correctly denied/allowed (DevTools network log checked) |
-| [ ] | G5 | **E2E report.** `docs/E2E_REPORT.md` with results, screenshots, found bugs and fixes | Report committed |
-| [ ] | **G✓** | **Milestone: push** | |
+| [x] | G2 | **Admin and config flows.** In Chrome: super admin creates org, owner adds site/source/camera/zone/rule; edge picks it up | All steps pass; screenshots saved |
+| [x] | G3 | **Alert flows.** Injected and real events → live alert in the browser → acknowledge → close; live view plays | All steps pass; console has no errors |
+| [x] | G4 | **Security flows.** Cross-org access attempts, viewer write attempts, super admin footage without/with support grant, secrets never visible in network responses | Every attempt correctly denied/allowed (DevTools network log checked) |
+| [x] | G5 | **E2E report.** `docs/E2E_REPORT.md` with results, screenshots, found bugs and fixes | Report committed |
+| [x] | **G✓** | **Milestone: push** | |
