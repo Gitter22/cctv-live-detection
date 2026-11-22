@@ -24,7 +24,8 @@
     "dev:server": "npm run dev -w apps/server",
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "seed": "npm run seed -w apps/server"
+    "seed": "npm run seed -w apps/server",
+    "e2e:mobile": "bash apps/mobile/e2e/run.sh"
   },
   "devDependencies": {
     "prettier": "3.10.1"

@@ -1,0 +1,11 @@
+# Demo site has no edge: live view must say so instead of spinning.
+appId: dev.vigil.app
+name: Live view on a site without an edge
+---
+- tapOn:
+    id: watch-live
+- extendedWaitUntil:
+    visible: "The site is offline.*"
+    timeout: 30000
+- takeScreenshot: "04-live-site-offline"
+- back

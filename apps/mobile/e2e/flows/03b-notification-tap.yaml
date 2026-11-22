@@ -1,0 +1,15 @@
+# The runner injects an event and opens the notification shade; tapping the push opens the alert.
+appId: dev.vigil.app
+name: Push notification arrives; tapping it opens the alert
+---
+- extendedWaitUntil:
+    visible: ".*${ALERT_TITLE}.*"
+    timeout: 45000
+- takeScreenshot: "03-push-notification"
+- tapOn: ".*${ALERT_TITLE}.*"
+- extendedWaitUntil:
+    visible:
+      id: alert-title
+      text: "${ALERT_TITLE}"
+    timeout: 20000
+- takeScreenshot: "03-opened-from-push"

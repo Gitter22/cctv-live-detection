@@ -1,0 +1,5 @@
+# Put the app in the background so the next alert arrives as a push notification.
+appId: dev.vigil.app
+name: Send app to background
+---
+- pressKey: Home

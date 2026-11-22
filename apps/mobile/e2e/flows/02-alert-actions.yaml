@@ -1,0 +1,41 @@
+# An injected event shows up in the list (it polls every 15 s), then acknowledge, note, close.
+appId: dev.vigil.app
+name: Alert appears; acknowledge, add a note, close
+---
+- extendedWaitUntil:
+    visible: "${ALERT_TITLE}"
+    timeout: 40000
+- takeScreenshot: "02-alert-in-list"
+- tapOn: "${ALERT_TITLE}"
+- extendedWaitUntil:
+    visible:
+      id: alert-title
+      text: "${ALERT_TITLE}"
+    timeout: 15000
+- assertVisible: "Camera ${CAMERA} · Rule ${RULE}"
+- tapOn:
+    id: alert-ack
+- extendedWaitUntil:
+    visible:
+      id: alert-meta
+      text: "(?s).*acked.*"
+    timeout: 15000
+- tapOn:
+    id: note-input
+- inputText: "Checked from the mobile E2E"
+- hideKeyboard
+- tapOn:
+    id: note-add
+- extendedWaitUntil:
+    visible: "(?s).*Checked from the mobile E2E.*"
+    timeout: 15000
+- tapOn:
+    id: alert-close
+- extendedWaitUntil:
+    visible:
+      id: alert-meta
+      text: "(?s).*closed.*"
+    timeout: 15000
+- assertVisible: "Reopen"
+- takeScreenshot: "02-alert-closed-with-note"
+- back

@@ -1,0 +1,36 @@
+# Fresh install state -> sign in -> alerts screen, push registered.
+appId: dev.vigil.app
+name: Sign in and register for push
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: login-server
+    timeout: 20000
+- tapOn:
+    id: login-server
+- eraseText: 60
+- inputText: "${SERVER}"
+- tapOn:
+    id: login-email
+- inputText: "${EMAIL}"
+- tapOn:
+    id: login-password
+- inputText: "${PASSWORD}"
+- hideKeyboard
+- tapOn:
+    id: login-submit
+# Android 13+ asks for notification permission after sign-in.
+- tapOn:
+    text: "Allow"
+    optional: true
+- extendedWaitUntil:
+    visible: "${ORG_NAME}"
+    timeout: 20000
+- extendedWaitUntil:
+    visible:
+      id: push-status
+      text: "Push notifications on"
+    timeout: 30000
+- takeScreenshot: "${SHOT}-signed-in"

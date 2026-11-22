@@ -1,0 +1,23 @@
+# Real site (signed in by 01 as the home viewer): open the newest alert and watch live.
+# The runner checks go2rtc for a WebRTC viewer while this runs.
+appId: dev.vigil.app
+name: Live view of a real camera
+---
+- tapOn:
+    id: filter-all
+- extendedWaitUntil:
+    visible:
+      id: alert-row
+    timeout: 30000
+- tapOn:
+    id: alert-row
+    index: 0
+- tapOn:
+    id: watch-live
+# Let the stream start (Maestro has no sleep; wait for something that never appears).
+- extendedWaitUntil:
+    visible: "never-shown-e2e-marker"
+    timeout: 15000
+    optional: true
+- takeScreenshot: "06-live-real-camera"
+- back

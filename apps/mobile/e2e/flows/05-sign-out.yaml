@@ -1,0 +1,15 @@
+# Back to the list and sign out (the runner then checks the push token was unregistered).
+appId: dev.vigil.app
+name: Sign out
+---
+- back
+- extendedWaitUntil:
+    visible:
+      id: sign-out
+    timeout: 15000
+- tapOn:
+    id: sign-out
+- extendedWaitUntil:
+    visible:
+      id: login-submit
+    timeout: 15000
