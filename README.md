@@ -1,4 +1,4 @@
-# CCTV alerts
+# Vigil
 
 Real-time alerting for CCTV across many organizations and sites. A **server** (the hub) manages organizations, sites, cameras, zones and rules. An **edge** at each site connects to the local NVR and cameras, runs detection and sends events up. Design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Progress: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md).
 

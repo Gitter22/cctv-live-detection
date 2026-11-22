@@ -1,4 +1,4 @@
-# Implementation plan
+# Vigil: implementation plan
 
 Design: [ARCHITECTURE.md](ARCHITECTURE.md). Each task is a **self-contained unit of work with its own commit**. The checkbox is ticked in that same commit. Each phase ends with a milestone: commit and **push**.
 

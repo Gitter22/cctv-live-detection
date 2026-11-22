@@ -1,4 +1,4 @@
-# Mobile app: build, install, push
+# Vigil mobile app: build, install, push
 
 `apps/mobile` is an Expo (SDK 58) app with **its own npm install** (Expo needs React 19.3.0 exactly; the web uses 19.3.1). The steps below need you (an Expo account and your phone). Everything else is ready.
 

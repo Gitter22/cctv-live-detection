@@ -93,7 +93,7 @@ function Shell({ children, lastAlertTitle }: { children: ReactNode; lastAlertTit
       <aside className="sidebar">
         <Link to={base} className="brand">
           <img src="/favicon.svg" alt="" width={24} height={24} />
-          <span>CCTV Alerts</span>
+          <span>Vigil</span>
         </Link>
         <select aria-label="Organization" value={orgId} onChange={(e) => navigate(`/o/${e.target.value}`)}>
           {(orgs ?? []).map((o) => (

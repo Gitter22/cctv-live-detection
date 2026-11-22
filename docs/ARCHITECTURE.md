@@ -1,4 +1,4 @@
-# Architecture: multi-site CCTV alerting
+# Vigil: architecture (multi-site CCTV alerting)
 
 Status: **agreed design**, 2026-11-21. Tasks and progress: [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 

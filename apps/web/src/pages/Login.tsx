@@ -34,7 +34,7 @@ export function LoginPage() {
       <form className="card login-card" onSubmit={submit} aria-label="Sign in">
         <div className="brand brand-lg">
           <img src="/favicon.svg" alt="" width={32} height={32} />
-          <span>CCTV Alerts</span>
+          <span>Vigil</span>
         </div>
         <label>
           Email

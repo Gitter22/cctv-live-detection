@@ -1,4 +1,4 @@
-# E2E report (phase G)
+# Vigil: E2E report (phase G)
 
 **Date:** 2026-11-22 · **Browser:** Chrome (Windows) driven by Claude in Chrome · **Stack:** full Docker Compose (`server` + `edge` profiles) on WSL2, web at `http://localhost:5173` (nginx → server).
 

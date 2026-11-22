@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "CCTV Alerts",
-    "slug": "cctv-alerts",
+    "name": "Vigil",
+    "slug": "vigil",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -17,7 +17,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "dev.cctvalerts.app",
+      "package": "dev.vigil.app",
       "permissions": [
         "POST_NOTIFICATIONS"
       ]
@@ -44,7 +44,7 @@
         }
       ]
     ],
-    "scheme": "cctvalerts",
+    "scheme": "vigil",
     "experiments": {
       "typedRoutes": false
     }

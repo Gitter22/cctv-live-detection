@@ -29,7 +29,7 @@ export default function Login() {
     <KeyboardAvoidingView style={ui.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen options={{ title: 'Sign in' }} />
       <View style={[ui.pad, { paddingTop: 32 }]}>
-        <Text style={ui.h1}>CCTV Alerts</Text>
+        <Text style={ui.h1}>Vigil</Text>
         <View>
           <Text style={ui.label}>Server address</Text>
           <TextInput style={ui.input} value={baseUrl} onChangeText={setBaseUrl} autoCapitalize="none" autoCorrect={false} keyboardType="url" placeholder="http://192.168.1.50:5173" />
