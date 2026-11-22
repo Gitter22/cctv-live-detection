@@ -77,3 +77,41 @@ Screenshots are in [`e2e/`](e2e/). The home-camera screenshots aren't committed,
 - **Phone:** push notifications, live view in the app and APK install (F6–F8) need your phone; see `docs/MOBILE.md`.
 - **TURN relaying** across networks needs a hub with a public IP. Locally, only credential issuing and refusal were checked.
 - **The `_h264` live fallback** on a browser without H.265 support (for example Firefox).
+
+---
+
+## Mobile (Android emulator), 2026-11-22: **12/12 pass**
+
+**Setup:** EAS preview APK (commit `9bbc938`) on a Pixel 7 emulator (Android 17, Google Play image), driven by
+Maestro 2.12.1 from `npm run e2e:mobile`. The runner re-seeds the demo org and injects events through the edge
+API. The emulator reaches the server at `http://10.0.2.2:5173`. Real push through Expo and FCM.
+
+| # | Check | Result |
+| --- | --- | --- |
+| 1 | Sign in, allow notifications, "Push notifications on" | ✅ ([shot](e2e/mobile/01-acme-signed-in.png)) |
+| 2 | The server stores the emulator's Expo push token for the user | ✅ |
+| 3 | Injected event → alert appears in the list by itself → acknowledge → note → close | ✅ ([list](e2e/mobile/02-alert-in-list.png), [closed with note](e2e/mobile/02-alert-closed-with-note.png)) |
+| 4 | App in the background → **push notification arrives** → tapping it opens that alert | ✅ ([shade](e2e/mobile/03-push-notification.png), [opened](e2e/mobile/03-opened-from-push.png)) |
+| 5 | Live view on a site without an edge → "The site is offline" | ✅ ([shot](e2e/mobile/04-live-site-offline.png)) |
+| 6 | Sign out → sign-in screen | ✅ |
+| 7 | Sign-out **unregisters** the push token on the server | ✅ |
+| 8 | Real camera (home viewer): live view plays in the app; go2rtc served WebRTC to it | ✅ (screenshot not committed: it shows your home) |
+
+### Bugs found and fixed while building the mobile tests
+
+1. **Push never registered on emulators.**
+   - **Symptom:** the app skipped registration when `Device.isDevice` was false.
+   - **Why it matters:** Android emulators with Google Play can receive push, so they could never be tested.
+   - **Fix:** only the iOS Simulator is skipped now. The registration result is shown on the alerts screen.
+2. **Sign-out didn't stop pushes.**
+   - **Symptom:** the app never called `DELETE /push/devices`, so a signed-out phone kept getting the previous user's alerts.
+   - **Fix:** sign-out now unregisters the token. Checked by test 7.
+3. **Blank screen after sign-out.**
+   - **Symptom:** the root layout swapped the navigator for a `<Redirect>`, which left an empty screen, for example after opening an alert from a notification.
+   - **Fix:** the app now uses Expo Router's `Stack.Protected` guards.
+4. **Live view stuck on "connecting" outside this PC.**
+   - **Cause:** go2rtc only advertised `127.0.0.1` as a WebRTC address.
+   - **Fix:** `EDGE_WEBRTC_CANDIDATES` now also lists `10.0.2.2` (emulator) and the PC's Wi-Fi IP (phones on the LAN). Documented in `.env.example`.
+
+### Still to check on a real phone
+Installing from the link, push on a real device (including the lock screen and the app closed), live view over Wi-Fi, and the PC's IP changing.

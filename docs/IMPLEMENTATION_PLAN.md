@@ -86,9 +86,9 @@ Step 1 (done, `1d0a1ca`): monorepo, go2rtc, Mosquitto, Postgres, vision service 
 | [x] | F3 | **TURN relay.** Optional coturn in Compose; ICE servers config to clients | Live view works with UDP blocked between peers. *Verified locally: short-lived HMAC credentials allocate, forged ones are refused. Actual relaying needs a hub with a public IP (deployment check).* |
 | [x] | F4 | **Mobile scaffold.** `apps/mobile` Expo + TypeScript, auth, shared API client | Runs in Expo Go / dev build |
 | [x] | F5 | **Mobile alerts.** Alert feed, detail with snapshot, acknowledge/close | Same alerts as the web |
-| [ ] | F6 | **Push notifications.** Device registration API; Expo push on alert | Phone gets a push for a new alert 👤 — *code done and server-tested (recipients, site limits, dead-token cleanup); needs `eas init` (Expo account) + a phone to verify* |
-| [ ] | F7 | **Mobile live view.** WebRTC player via F2 | Tap alert → live video on the phone 👤 — *code done: web embed player in a WebView (token injected, never in the URL); signalling verified with Bearer from a phone origin; needs a phone to see video* |
-| [ ] | F8 | **APK build.** EAS/local build, install instructions | APK installed on your phone 👤 — *ready: `eas.json` (preview → APK), cleartext LAN http, notifications plugin, guide in [MOBILE.md](MOBILE.md); needs `eas login/init/build` by you* |
+| [ ] | F6 | **Push notifications.** Device registration API; Expo push on alert | Phone gets a push for a new alert 👤 — **Verified on the Android emulator 2026-11-22 (`npm run e2e:mobile`, 12/12); real phone check pending.** *code done and server-tested (recipients, site limits, dead-token cleanup); needs `eas init` (Expo account) + a phone to verify* |
+| [ ] | F7 | **Mobile live view.** WebRTC player via F2 | Tap alert → live video on the phone 👤 — **Verified on the Android emulator 2026-11-22 (`npm run e2e:mobile`, 12/12); real phone check pending.** *code done: web embed player in a WebView (token injected, never in the URL); signalling verified with Bearer from a phone origin; needs a phone to see video* |
+| [ ] | F8 | **APK build.** EAS/local build, install instructions | APK installed on your phone 👤 — **Verified on the Android emulator 2026-11-22 (`npm run e2e:mobile`, 12/12); real phone check pending.** *ready: `eas.json` (preview → APK), cleartext LAN http, notifications plugin, guide in [MOBILE.md](MOBILE.md); needs `eas login/init/build` by you* |
 | [ ] | **F✓** | **Milestone: push** | |
 
 ## Phase G: End-to-end browser testing (Chrome DevTools)
