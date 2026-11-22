@@ -10,6 +10,9 @@ Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
 });
 
+// This phone's Expo push token once registered (so sign-out can unregister it).
+let pushToken: string | null = null;
+
 // Last registration result, shown on the alerts screen (and read by the Maestro tests).
 let status = '';
 const listeners = new Set<() => void>();
@@ -55,7 +58,17 @@ async function register(session: Session): Promise<string> {
   if (!projectId) return 'Push not set up yet (run `eas init` once)';
   const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
   await api(session, 'POST', '/push/devices', { token, platform: Platform.OS === 'ios' ? 'ios' : 'android' });
+  pushToken = token;
   return 'Push notifications on';
+}
+
+/** On sign-out: stop this phone receiving the signed-out user's alerts. Best effort (offline is fine). */
+export async function unregisterPush(session: Session): Promise<void> {
+  if (!pushToken) return;
+  const token = pushToken;
+  pushToken = null;
+  setStatus('');
+  await api(session, 'DELETE', '/push/devices', { token }).catch(() => undefined);
 }
 
 /** Tapping a notification opens that alert. */

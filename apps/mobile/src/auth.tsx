@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { ApiError, api, clearSession, loadSession, saveSession, type Session } from './api';
+import { unregisterPush } from './push';
 
 export interface Me {
   user: { id: string; name: string; email: string };
@@ -46,10 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
+    if (session) await unregisterPush(session);
     await clearSession();
     setSession(null);
     setMe(null);
-  }, []);
+  }, [session]);
 
   return <Ctx.Provider value={{ ready, session, me, login, logout }}>{children}</Ctx.Provider>;
 }
