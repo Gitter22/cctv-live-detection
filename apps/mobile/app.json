@@ -47,6 +47,17 @@
     "scheme": "vigil",
     "experiments": {
       "typedRoutes": false
-    }
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "62fadf47-7eee-496a-a2fb-65b0cac1645c"
+      }
+    },
+    "owner": "aadil22"
   }
 }
