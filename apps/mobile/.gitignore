@@ -45,3 +45,6 @@ yarn-error.*
 dist/
 android/
 ios/
+
+# Firebase config: uploaded to EAS as the GOOGLE_SERVICES_JSON file variable, not committed
+google-services.json
