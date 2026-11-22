@@ -32,19 +32,19 @@ export default function Login() {
         <Text style={ui.h1}>Vigil</Text>
         <View>
           <Text style={ui.label}>Server address</Text>
-          <TextInput style={ui.input} value={baseUrl} onChangeText={setBaseUrl} autoCapitalize="none" autoCorrect={false} keyboardType="url" placeholder="http://192.168.1.50:5173" />
+          <TextInput style={ui.input} testID="login-server" value={baseUrl} onChangeText={setBaseUrl} autoCapitalize="none" autoCorrect={false} keyboardType="url" placeholder="http://192.168.1.50:5173" />
           <Text style={[ui.muted, { fontSize: 12, marginTop: 4 }]}>The web app address (same Wi-Fi, Tailscale or your public hub).</Text>
         </View>
         <View>
           <Text style={ui.label}>Email</Text>
-          <TextInput style={ui.input} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" />
+          <TextInput style={ui.input} testID="login-email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" />
         </View>
         <View>
           <Text style={ui.label}>Password</Text>
-          <TextInput style={ui.input} value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" />
+          <TextInput style={ui.input} testID="login-password" value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" />
         </View>
-        {error && <Text style={ui.error}>{error}</Text>}
-        <Pressable style={[ui.button, busy && { opacity: 0.6 }]} onPress={submit} disabled={busy} accessibilityRole="button">
+        {error && <Text testID="login-error" style={ui.error}>{error}</Text>}
+        <Pressable style={[ui.button, busy && { opacity: 0.6 }]} testID="login-submit" onPress={submit} disabled={busy} accessibilityRole="button">
           <Text style={ui.buttonText}>{busy ? 'Signing in…' : 'Sign in'}</Text>
         </Pressable>
       </View>

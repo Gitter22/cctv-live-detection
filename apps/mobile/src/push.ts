@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { Platform } from 'react-native';
 import { api, type Session } from './api';
 
@@ -10,13 +10,35 @@ Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
 });
 
+// Last registration result, shown on the alerts screen (and read by the Maestro tests).
+let status = '';
+const listeners = new Set<() => void>();
+function setStatus(s: string) {
+  status = s;
+  listeners.forEach((l) => l());
+}
+export function usePushStatus() {
+  return useSyncExternalStore(
+    (l) => (listeners.add(l), () => listeners.delete(l)),
+    () => status,
+  );
+}
+
 /**
  * Ask permission, get this phone's Expo push token and register it with the server.
  * Needs an EAS project id (app.json extra.eas.projectId, created by `eas init`).
  * Returns a short status for the UI.
  */
 export async function registerForPush(session: Session): Promise<string> {
-  if (!Device.isDevice) return 'Push needs a real phone';
+  const s = await register(session).catch((e: unknown) => `Push failed: ${e instanceof Error ? e.message : String(e)}`);
+  setStatus(s);
+  return s;
+}
+
+async function register(session: Session): Promise<string> {
+  // The iOS Simulator can't get a push token. Android emulators can, if their system image
+  // includes Google Play (that's how the E2E tests receive pushes).
+  if (!Device.isDevice && Platform.OS === 'ios') return 'Push needs a real phone';
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('alerts', { name: 'Alerts', importance: Notifications.AndroidImportance.HIGH });
     await Notifications.setNotificationChannelAsync('alerts-danger', {

@@ -21,8 +21,8 @@ export default function AlertDetail() {
         <Text style={ui.muted}>{alert.isError ? alert.error.message : 'Loading…'}</Text>
       ) : (
         <>
-          <Text style={ui.h1}>{a.title}</Text>
-          <Text style={ui.muted}>
+          <Text testID="alert-title" style={ui.h1}>{a.title}</Text>
+          <Text testID="alert-meta" style={ui.muted}>
             {a.severity} · {new Date(a.createdAt).toLocaleString()} ({timeAgo(a.createdAt)}) · {a.status.toLowerCase()}
           </Text>
           {a.snapshotUrl && session && (
@@ -38,18 +38,18 @@ export default function AlertDetail() {
           </Text>
           {a.cameraKey && (
             <Link href={{ pathname: '/live', params: { site: a.siteId, key: a.cameraKey } }} asChild>
-              <Pressable style={[ui.button, { backgroundColor: colors.ok }]} accessibilityRole="button">
+              <Pressable testID="watch-live" style={[ui.button, { backgroundColor: colors.ok }]} accessibilityRole="button">
                 <Text style={ui.buttonText}>Watch live</Text>
               </Pressable>
             </Link>
           )}
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {a.status === 'OPEN' && (
-              <Pressable style={[ui.button, { flex: 1 }]} onPress={() => act.mutate({ action: 'ack' })}>
+              <Pressable testID="alert-ack" style={[ui.button, { flex: 1 }]} onPress={() => act.mutate({ action: 'ack' })}>
                 <Text style={ui.buttonText}>Acknowledge</Text>
               </Pressable>
             )}
-            <Pressable style={[ui.button, { flex: 1, backgroundColor: colors.muted }]} onPress={() => act.mutate({ action: a.status === 'CLOSED' ? 'reopen' : 'close' })}>
+            <Pressable testID="alert-close" style={[ui.button, { flex: 1, backgroundColor: colors.muted }]} onPress={() => act.mutate({ action: a.status === 'CLOSED' ? 'reopen' : 'close' })}>
               <Text style={ui.buttonText}>{a.status === 'CLOSED' ? 'Reopen' : 'Close'}</Text>
             </Pressable>
           </View>
@@ -64,8 +64,9 @@ export default function AlertDetail() {
               </Text>
             ))}
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
-              <TextInput style={[ui.input, { flex: 1 }]} placeholder="Add a note…" value={note} onChangeText={setNote} />
+              <TextInput testID="note-input" style={[ui.input, { flex: 1 }]} placeholder="Add a note…" value={note} onChangeText={setNote} />
               <Pressable
+                testID="note-add"
                 style={[ui.button, { paddingHorizontal: 14 }]}
                 disabled={!note.trim()}
                 onPress={() => act.mutate({ action: 'notes', text: note }, { onSuccess: () => setNote('') })}

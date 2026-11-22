@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { type Alert, timeAgo, useAlerts } from '../src/alerts';
 import { useAuth } from '../src/auth';
+import { usePushStatus } from '../src/push';
 import { colors, ui } from '../src/ui';
 
 const SEV = { danger: colors.danger, warning: colors.warning, info: colors.info };
@@ -11,13 +12,14 @@ export default function AlertsScreen() {
   const { logout, me } = useAuth();
   const [filter, setFilter] = useState<'OPEN' | 'ALL'>('OPEN');
   const alerts = useAlerts(filter);
+  const push = usePushStatus();
   return (
     <View style={ui.screen}>
       <Stack.Screen
         options={{
           title: me?.memberships[0]?.organization.name ?? 'Alerts',
           headerRight: () => (
-            <Pressable onPress={() => void logout()} accessibilityRole="button">
+            <Pressable testID="sign-out" onPress={() => void logout()} accessibilityRole="button">
               <Text style={{ color: colors.primary, fontWeight: '600' }}>Sign out</Text>
             </Pressable>
           ),
@@ -25,11 +27,16 @@ export default function AlertsScreen() {
       />
       <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 12 }}>
         {(['OPEN', 'ALL'] as const).map((f) => (
-          <Pressable key={f} onPress={() => setFilter(f)} style={[pill.base, filter === f && pill.on]} accessibilityRole="button">
+          <Pressable key={f} testID={`filter-${f.toLowerCase()}`} onPress={() => setFilter(f)} style={[pill.base, filter === f && pill.on]} accessibilityRole="button">
             <Text style={[pill.text, filter === f && { color: '#fff' }]}>{f === 'OPEN' ? 'Open' : 'All'}</Text>
           </Pressable>
         ))}
       </View>
+      {push ? (
+        <Text testID="push-status" style={[ui.muted, { paddingHorizontal: 16, paddingTop: 6, fontSize: 12 }]}>
+          {push}
+        </Text>
+      ) : null}
       <FlatList
         data={alerts.data ?? []}
         keyExtractor={(a) => a.id}
@@ -45,7 +52,7 @@ export default function AlertsScreen() {
 function AlertRow({ alert }: { alert: Alert }) {
   return (
     <Link href={`/alert/${alert.id}`} asChild>
-      <Pressable style={[ui.card, { borderLeftWidth: 5, borderLeftColor: SEV[alert.severity] }]} accessibilityRole="button">
+      <Pressable testID="alert-row" style={[ui.card, { borderLeftWidth: 5, borderLeftColor: SEV[alert.severity] }]} accessibilityRole="button">
         <Text style={{ fontWeight: '700', fontSize: 16, color: colors.text }}>{alert.title}</Text>
         <Text style={ui.muted}>
           {alert.severity} · {timeAgo(alert.createdAt)} · {alert.status.toLowerCase()}
