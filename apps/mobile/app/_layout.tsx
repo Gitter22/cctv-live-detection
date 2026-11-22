@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Redirect, Stack, usePathname } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
 import { useEffect } from 'react';
@@ -10,7 +10,6 @@ const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1 } } 
 
 function Gate() {
   const { ready, session } = useAuth();
-  const path = usePathname();
   useNotificationTaps();
   useEffect(() => {
     if (session) void registerForPush(session);
@@ -21,8 +20,20 @@ function Gate() {
         <ActivityIndicator />
       </View>
     );
-  if (!session && path !== '/login') return <Redirect href="/login" />;
-  return <Stack screenOptions={{ headerTitleStyle: { fontWeight: '700' } }} />;
+  // Protected routes keep the navigator mounted when the session changes (swapping it for a
+  // <Redirect> left a blank screen after sign-out). The router moves to the allowed screen.
+  return (
+    <Stack screenOptions={{ headerTitleStyle: { fontWeight: '700' } }}>
+      <Stack.Protected guard={!!session} redirectTo="/login">
+        <Stack.Screen name="index" />
+        <Stack.Screen name="alert/[id]" />
+        <Stack.Screen name="live/index" />
+      </Stack.Protected>
+      <Stack.Protected guard={!session} redirectTo="/">
+        <Stack.Screen name="login" />
+      </Stack.Protected>
+    </Stack>
+  );
 }
 
 export default function RootLayout() {
